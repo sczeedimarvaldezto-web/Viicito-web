@@ -45,11 +45,31 @@ php artisan key:generate
 
 ### Paso 3: Crear Base de Datos
 
-```sql
-CREATE DATABASE IF NOT EXISTS viicito_db 
-CHARACTER SET utf8mb4 
-COLLATE utf8mb4_unicode_ci;
+**Opción A: Usando PHPMyAdmin (Recomendado para Laragon)**
+
+1. Abrir PHPMyAdmin desde Laragon (http://localhost/phpmyadmin)
+2. Ir a **Import** o similary
+3. Seleccionar archivo: `database/viicito_db.sql`
+4. Click en **Import**
+
+**Opción B: Usando Línea de Comandos**
+
+```bash
+# Asegúrate de que MySQL está corriendo
+# Si tienes credenciales específicas, ajusta el comando:
+mysql -h localhost -u root [-p password] < database/viicito_db.sql
+
+# Para Laragon (si requiere socket):
+mysql --socket=/tmp/mysql.sock -u root < database/viicito_db.sql
 ```
+
+**Opción C: Usando HeidiSQL (Incluido en Laragon)**
+
+1. Abrir HeidiSQL desde Laragon
+2. File → Run SQL file
+3. Seleccionar `database/viicito_db.sql`
+
+**Nota sobre Credenciales**: Si Laragon pide contraseña, contacta al administrador de sistemas o revisa la configuración de MySQL en Laragon.
 
 ### Paso 4: Actualizar .env con Credenciales
 
@@ -95,7 +115,40 @@ npm run dev
 npm run build
 ```
 
-### Paso 8: Iniciar Servidor
+---
+
+## ✅ Verificar Conexión a Base de Datos
+
+Una vez importado el SQL, valida la conexión:
+
+```bash
+# Método 1: Usar Laravel Tinker
+php artisan tinker
+>>> DB::connection('mysql')->getPdo()
+=> PDOConnection object (proves connection works!)
+>>> exit
+
+# Método 2: Ejecutar test
+php artisan test --filter=DatabaseTest
+
+# Método 3: Ver tables
+php artisan tinker
+>>> DB::select('SHOW TABLES FROM viicito_db')
+=> Array with all tables
+```
+
+### Troubleshooting Conexión
+
+**Error: "Access denied for user 'root'@'localhost'"**
+- Verifica credenciales en `.env` match tu configuración local
+- En Laragon: abre PHPMyAdmin para confirmar credenciales
+- Prueba conectar con HeidiSQL primero
+
+**Error: "No such file or directory"**
+- Asegurate de estar en el directorio correcto: `cd c:\laragon\www\Sistema_Viicito_web_V1.0.1`
+- Verifica que `database/viicito_db.sql` existe
+
+---
 
 ```bash
 # Con Laragon: Simplemente start
