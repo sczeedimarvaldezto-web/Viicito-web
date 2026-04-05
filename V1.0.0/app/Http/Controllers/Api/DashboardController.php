@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\User;
 use App\Models\Venta;
 use App\Models\Producto;
 use App\Models\Usuario;
@@ -144,4 +145,36 @@ class DashboardController extends Controller
             'productos' => $productos,
         ]);
     }
+
+    /**
+     * GET /api/empleados - Lista de empleados con estadísticas
+     */
+    public function empleados(Request $request)
+    {
+        $fecha_inicio = $request->get('fecha_inicio', now()->startOfMonth());
+        $fecha_final = $request->get('fecha_final', now());
+
+        // Obtener todos los empleados (rol != owner)
+        $empleados = User::with('role')
+            ->whereHas('role', function ($query) {
+                $query->where('name', '!=', 'owner');
+            })
+            ->get()
+            ->map(fn ($emp) => [
+                'id' => $emp->id,
+                'nombre' => $emp->name,
+                'email' => $emp->email,
+                'rol' => $emp->role?->label ?? 'Empleado',
+                'total_ventas' => 0,  // Próximo: conectar con tabla de ventas
+                'total_vendido' => 0,
+                'promedio_venta' => 0,
+                'fecha_registro' => $emp->created_at->format('d/m/Y'),
+            ]);
+
+        return response()->json([
+            'total_empleados' => $empleados->count(),
+            'empleados' => $empleados,
+        ]);
+    }
+
 }

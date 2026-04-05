@@ -24,10 +24,14 @@ instance.interceptors.request.use((config) => {
 instance.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      // Redirigir a login
+    const status = error.response?.status;
+    const requestUrl = error.config?.url || '';
+
+    if ((status === 401 || status === 403) && !requestUrl.includes('/login') && !requestUrl.includes('/register')) {
+      localStorage.removeItem('user');
       window.location.href = '/login';
     }
+
     return Promise.reject(error);
   }
 );

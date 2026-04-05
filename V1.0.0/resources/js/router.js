@@ -11,8 +11,27 @@ import NuevaCompra from '@/pages/NuevaCompra.vue';
 import Clientes from '@/pages/Clientes.vue';
 import Categorias from '@/pages/Categorias.vue';
 import Reportes from '@/pages/Reportes.vue';
+import Empleados from '@/pages/Empleados.vue';
+import OwnerPanel from '@/pages/OwnerPanel.vue';
+import Login from '@/pages/Login.vue';
+import Register from '@/pages/Register.vue';
 
 const routes = [
+  {
+    path: '/login',
+    component: Login,
+    meta: { title: 'Login - Viicito' }
+  },
+  {
+    path: '/register',
+    component: Register,
+    meta: { title: 'Registro - Viicito' }
+  },
+  {
+    path: '/owner-panel',
+    component: OwnerPanel,
+    meta: { title: 'Panel Owner - Viicito' }
+  },
   {
     path: '/',
     component: Dashboard,
@@ -68,11 +87,70 @@ const routes = [
     component: Reportes,
     meta: { title: 'Reportes - Viicito' }
   },
+  {
+    path: '/empleados',
+    component: Empleados,
+    meta: { title: 'Empleados - Viicito' }
+  },
 ];
 
 const router = createRouter({
   history: createWebHistory('/'),
   routes
+});
+
+// Guard de navegación para autenticación y roles
+router.beforeEach((to, from, next) => {
+  const userData = localStorage.getItem('user');
+  const usuario = userData ? JSON.parse(userData) : null;
+  const isAuthenticated = !!usuario;
+  const role = usuario?.role?.name;
+
+  if (to.path === '/login') {
+    if (isAuthenticated) {
+      next(role === 'owner' ? '/owner-panel' : '/ventas');
+    } else {
+      next();
+    }
+    return;
+  }
+
+  if (to.path === '/register') {
+    if (isAuthenticated && role !== 'owner') {
+      next('/ventas');
+    } else {
+      next();
+    }
+    return;
+  }
+
+  if (!isAuthenticated) {
+    next('/login');
+    return;
+  }
+
+  if (role !== 'owner') {
+    const forbiddenForEmployees = [
+      '/owner-panel',
+      '/reportes',
+      '/clientes',
+      '/categorias',
+      '/compras',
+      '/empleados',
+    ];
+
+    if (forbiddenForEmployees.some((path) => to.path === path || to.path.startsWith(`${path}/`))) {
+      next('/ventas');
+      return;
+    }
+
+    if (to.path === '/') {
+      next('/ventas');
+      return;
+    }
+  }
+
+  next();
 });
 
 // Actualizar título de página

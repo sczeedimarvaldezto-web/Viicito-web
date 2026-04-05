@@ -1,24 +1,40 @@
+# Logs y Archivos del Sistema
 *.log
 .DS_Store
+Thumbs.db
+
+# Variables de Entorno (¡Nunca subir!)
 .env
+.env.*
 .env.backup
-.env.production
+auth.json
+
+# Dependencias (Lo más importante para tu error)
+node_modules/
+V1.0.0/node_modules/
+vendor/
+
+# Editores y Herramientas
+.fleet/
+.idea/
+.nova/
+.vscode/
+.zed/
 .phpactor.json
 .phpunit.result.cache
-/.fleet
-/.idea
-/.nova
-/.phpunit.cache
-/.vscode
-/.zed
-/auth.json
-/node_modules
-/public/build
-/public/hot
-/public/storage
-/storage/*.key
-/storage/pail
-/vendor
+.phpunit.cache/
+
+# Compilados de Frontend
+public/build/
+public/hot/
+dist/
+.vite/
+
+# Laravel / Almacenamiento
+storage/*.key
+storage/pail/
+public/storage/
+
+# Otros
 Homestead.json
 Homestead.yaml
-Thumbs.db

@@ -7,19 +7,28 @@
           <span class="me-2">🍾</span>
           <strong>Viicito</strong>&nbsp;<small>v1.0.0</small>
         </a>
-        <div class="d-flex align-items-center">
-          <span class="text-light me-3">{{ usuarioLogueado?.nombre_completo }}</span>
+        <div class="d-flex align-items-center" v-if="usuarioLogueado">
+          <span class="text-light me-3">{{ usuarioLogueado.name }}</span>
           <button @click="logout" class="btn btn-sm btn-outline-light">Salir</button>
+        </div>
+        <div v-else>
+          <router-link to="/login" class="btn btn-sm btn-outline-light me-2">Iniciar Sesión</router-link>
+          <router-link to="/register" class="btn btn-sm btn-primary">Registrarse</router-link>
         </div>
       </div>
     </nav>
 
-    <div class="container-fluid">
+    <div class="container-fluid" v-if="usuarioLogueado">
       <div class="row">
         <!-- Sidebar -->
         <nav class="col-md-2 d-md-block bg-light sidebar mt-2">
           <ul class="nav flex-column">
-            <li class="nav-item">
+            <li class="nav-item" v-if="esOwner">
+              <router-link to="/owner-panel" class="nav-link" active-class="active">
+                🛠️ Panel Owner
+              </router-link>
+            </li>
+            <li class="nav-item" v-if="esOwner">
               <router-link to="/" class="nav-link" active-class="active">
                 📊 Dashboard
               </router-link>
@@ -39,24 +48,29 @@
                 ➕ Nueva Venta
               </router-link>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" v-if="esOwner">
               <router-link to="/compras" class="nav-link" active-class="active">
                 📦 Compras
               </router-link>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" v-if="esOwner">
               <router-link to="/clientes" class="nav-link" active-class="active">
                 👥 Clientes
               </router-link>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" v-if="esOwner">
               <router-link to="/categorias" class="nav-link" active-class="active">
                 🏷️ Categorías
               </router-link>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" v-if="esOwner">
               <router-link to="/reportes" class="nav-link" active-class="active">
                 📈 Reportes
+              </router-link>
+            </li>
+            <li class="nav-item" v-if="esOwner">
+              <router-link to="/empleados" class="nav-link" active-class="active">
+                👔 Empleados
               </router-link>
             </li>
           </ul>
@@ -67,6 +81,11 @@
           <router-view />
         </main>
       </div>
+    </div>
+
+    <!-- Login/Register Pages -->
+    <div v-else>
+      <router-view />
     </div>
 
     <!-- Toast Notifications -->
@@ -81,6 +100,8 @@
 </template>
 
 <script>
+import { api } from '@/services/api';
+
 export default {
   name: 'App',
   data() {
@@ -89,18 +110,29 @@ export default {
       notificacion: null,
     };
   },
+  computed: {
+    esOwner() {
+      return this.usuarioLogueado?.role?.name === 'owner';
+    }
+  },
   mounted() {
     this.cargarUsuario();
   },
   methods: {
     cargarUsuario() {
-      // Simulado - en producción obtener del backend
-      this.usuarioLogueado = {
-        nombre_completo: 'Admin Viicito',
-        rol: 'administrador',
-      };
+      const user = localStorage.getItem('user');
+      if (user) {
+        this.usuarioLogueado = JSON.parse(user);
+      }
     },
-    logout() {
+    async logout() {
+      try {
+        await api.post('/api/logout');
+      } catch (error) {
+        console.error('Error al cerrar sesión:', error);
+      }
+      localStorage.removeItem('user');
+      this.usuarioLogueado = null;
       this.$router.push('/login');
     },
   },
