@@ -1,0 +1,57 @@
+# --- Logs y Archivos del Sistema ---
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+
+# --- Variables de Entorno (Seguridad Crítica) ---
+.env
+.env.*
+.env.backup
+*.key
+auth.json
+
+# --- Dependencias (No se suben, se instalan localmente) ---
+node_modules/
+vendor/
+V1.0.0/node_modules/
+
+# --- Editores y Herramientas ---
+.fleet/
+.idea/
+.nova/
+.vscode/
+.zed/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.phpactor.json
+.phpunit.result.cache
+.phpunit.cache/
+
+# --- Compilados de Frontend (Vite / Mix) ---
+public/build/
+public/hot/
+dist/
+.vite/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# --- Laravel / Almacenamiento ---
+# Ignora todo el contenido de storage excepto las carpetas
+/storage/app/public/*
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/testing/*
+/storage/framework/views/*.php
+/storage/logs/*.log
+
+# --- Otros ---
+Homestead.json
+Homestead.yaml
+.htaccess
+/nbproject/
