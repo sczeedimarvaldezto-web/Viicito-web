@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Api;
 use App\Models\Venta;
 use App\Models\DetalleVenta;
 use App\Models\Producto;
-use App\Models\Cliente;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -22,7 +21,7 @@ class VentaController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Venta::with(['usuario', 'cliente', 'detalles.producto']);
+        $query = Venta::with(['usuario', 'detalles.producto']);
 
         // Filtros
         if ($request->has('estado')) {
@@ -33,9 +32,7 @@ class VentaController extends Controller
             $query->where('id_usuario', $request->vendedor);
         }
 
-        if ($request->has('cliente')) {
-            $query->where('id_cliente', $request->cliente);
-        }
+
 
         if ($request->has('fecha_inicio') && $request->has('fecha_final')) {
             $query->rangoFechas(
@@ -59,7 +56,7 @@ class VentaController extends Controller
     public function show(Venta $venta)
     {
         return response()->json(
-            $venta->load(['usuario', 'cliente', 'detalles.producto'])
+            $venta->load(['usuario', 'detalles.producto'])
         );
     }
 
@@ -68,9 +65,17 @@ class VentaController extends Controller
      */
     public function store(Request $request)
     {
+        \Log::info('📊 VentaController@store - Petición recibida', [
+            'method' => $request->method(),
+            'url' => $request->url(),
+            'headers' => $request->headers->all(),
+            'all_data' => $request->all(),
+            'auth_user' => auth()->user()?->id,
+            'session_id' => session()->getId(),
+        ]);
+
         $validated = $request->validate([
-            'id_usuario' => 'required|exists:usuario,id_usuario',
-            'id_cliente' => 'required|exists:cliente,id_cliente',
+            'id_usuario' => 'required|integer|exists:usuario,id_usuario',  // ✅ Validar en tabla 'usuario' con columna 'id_usuario'
             'metodo_pago' => 'required|in:Efectivo,Tarjeta,Cheque,Crédito',
             'observacion' => 'nullable|string',
             'items' => 'required|array',
@@ -80,43 +85,27 @@ class VentaController extends Controller
             'items.*.descuento' => 'nullable|numeric|min:0',
         ]);
 
+        \Log::info('✅ Validación exitosa', ['validated' => $validated]);
+
         try {
             DB::beginTransaction();
 
-            // Generar número de documento
-            $ultimo = Venta::latest('id_venta')->first();
-            $numero_documento = 'VTA-' . str_pad(($ultimo?->id_venta ?? 0) + 1, 8, '0', STR_PAD_LEFT);
-
-            // Crear venta
-            $venta = Venta::create([
-                'id_usuario' => $validated['id_usuario'],
-                'id_cliente' => $validated['id_cliente'],
-                'numero_documento' => $numero_documento,
-                'metodo_pago' => $validated['metodo_pago'],
-                'observacion' => $validated['observacion'] ?? null,
-                'fecha_hora' => now(),
-                'estado' => 'Completada',
-            ]);
-
-            // Crear detalles y calcular totales
+            // ✅ PASO 1: Calcular totales ANTES de crear la venta
             $subtotal = 0;
+            $items_procesados = [];
+            
             foreach ($validated['items'] as $item) {
-                $producto = Producto::find($item['id_producto']);
-                
+                $producto = Producto::findOrFail($item['id_producto']);
                 $descuento = $item['descuento'] ?? 0;
                 $subtotal_item = ($item['cantidad'] * $item['precio_unitario']) - $descuento;
-
-                DetalleVenta::create([
-                    'id_venta' => $venta->id_venta,
-                    'id_producto' => $item['id_producto'],
-                    'cantidad' => $item['cantidad'],
-                    'precio_unitario' => $item['precio_unitario'],
+                
+                $items_procesados[] = [
+                    'producto' => $producto,
                     'descuento' => $descuento,
-                    'subtotal' => $subtotal_item,
-                ]);
-
-                // Actualizar stock
-                $producto->decrement('stock_actual', $item['cantidad']);
+                    'subtotal_item' => $subtotal_item,
+                    'item' => $item,
+                ];
+                
                 $subtotal += $subtotal_item;
             }
 
@@ -124,21 +113,56 @@ class VentaController extends Controller
             $impuesto = $subtotal * 0.21;
             $total = $subtotal + $impuesto;
 
-            $venta->update([
+            // Generar número de documento
+            $ultimo = Venta::latest('id_venta')->first();
+            $numero_documento = 'VTA-' . str_pad(($ultimo?->id_venta ?? 0) + 1, 8, '0', STR_PAD_LEFT);
+
+            // ✅ PASO 2: Crear venta CON los totales calculados
+            $venta = Venta::create([
+                'id_usuario' => $validated['id_usuario'],
+                'numero_documento' => $numero_documento,
+                'metodo_pago' => $validated['metodo_pago'],
+                'observacion' => $validated['observacion'] ?? null,
+                'fecha_hora' => now(),
+                'estado' => 'Completada',
                 'subtotal' => $subtotal,
                 'impuesto' => $impuesto,
                 'total_venta' => $total,
             ]);
 
+            // ✅ PASO 3: Crear detalles y actualizar stock
+            foreach ($items_procesados as $procesado) {
+                DetalleVenta::create([
+                    'id_venta' => $venta->id_venta,
+                    'id_producto' => $procesado['item']['id_producto'],
+                    'cantidad' => $procesado['item']['cantidad'],
+                    'precio_unitario' => $procesado['item']['precio_unitario'],
+                    'descuento' => $procesado['descuento'],
+                    'subtotal' => $procesado['subtotal_item'],
+                ]);
+
+                // Actualizar stock
+                $procesado['producto']->decrement('stock_actual', $procesado['item']['cantidad']);
+            }
+
             DB::commit();
 
             return response()->json(
-                $venta->load(['usuario', 'cliente', 'detalles.producto']),
+                $venta->load(['usuario', 'detalles.producto']),
                 Response::HTTP_CREATED
             );
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json(['error' => $e->getMessage()], Response::HTTP_BAD_REQUEST);
+            \Log::error('❌ Error al crear venta', [
+                'error' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return response()->json([
+                'error' => $e->getMessage(),
+                'type' => class_basename($e),
+            ], Response::HTTP_BAD_REQUEST);
         }
     }
 
@@ -154,7 +178,7 @@ class VentaController extends Controller
 
         $venta->update($validated);
 
-        return response()->json($venta->load(['usuario', 'cliente', 'detalles.producto']));
+        return response()->json($venta->load(['usuario', 'detalles.producto']));
     }
 
     /**
@@ -187,7 +211,7 @@ class VentaController extends Controller
 
         $ventas = Venta::whereDate('fecha_hora', $fecha)
             ->completadas()
-            ->with(['usuario', 'cliente'])
+            ->with(['usuario'])
             ->get();
 
         $totales = [

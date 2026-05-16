@@ -12,8 +12,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Configurar middleware para SPA con autenticación basada en sesiones
+        $middleware->statefulApi();
+        
+        // Agregar middleware CORS a rutas API
+        $middleware->api(append: [
+            \Illuminate\Http\Middleware\HandleCors::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Manejar excepciones de validación con detalles completos en JSON
+        $exceptions->shouldRenderJsonWhen(fn () => true);
     })->create();

@@ -11,7 +11,7 @@
     </div>
 
     <div class="card shadow-sm">
-      <div class="card-body">
+      <div class="card-body dark-card-body">
         <form @submit.prevent="guardarProducto" ref="form">
           <div v-if="mensajeExito" class="alert alert-success">
             {{ mensajeExito }}
@@ -22,7 +22,7 @@
               <input
                 v-model="producto.nombre_producto"
                 type="text"
-                class="form-control"
+                class="form-control dark-form-control"
                 required
               />
               <div v-if="errores.nombre_producto" class="invalid-feedback d-block">
@@ -35,7 +35,7 @@
               <input
                 v-model="producto.codigo_barras"
                 type="text"
-                class="form-control"
+                class="form-control dark-form-control"
                 placeholder="Ej. 123456789012"
                 required
               />
@@ -46,7 +46,7 @@
 
             <div class="col-md-6">
               <label class="form-label">Categoría</label>
-              <select v-model="producto.id_categoria" class="form-select" required>
+              <select v-model="producto.id_categoria" class="form-select dark-form-select" required>
                 <option value="">Seleccione una categoría</option>
                 <option
                   v-for="categoria in categorias"
@@ -68,7 +68,7 @@
                 type="number"
                 step="0.01"
                 min="0"
-                class="form-control"
+                class="form-control dark-form-control"
                 required
               />
               <div v-if="errores.precio_venta" class="invalid-feedback d-block">
@@ -82,7 +82,7 @@
                 v-model="producto.stock_actual"
                 type="number"
                 min="0"
-                class="form-control"
+                class="form-control dark-form-control"
                 required
               />
               <div v-if="errores.stock_actual" class="invalid-feedback d-block">
@@ -98,7 +98,7 @@
                 step="0.1"
                 min="0"
                 max="100"
-                class="form-control"
+                class="form-control dark-form-control"
               />
               <div v-if="errores.grado_alcohol" class="invalid-feedback d-block">
                 {{ errores.grado_alcohol[0] }}
@@ -110,7 +110,7 @@
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp"
-                class="form-control"
+                class="form-control dark-form-control"
                 @change="onFileChange"
               />
               <div v-if="errores.imagen_producto" class="invalid-feedback d-block">
@@ -128,7 +128,7 @@
                 type="number"
                 step="0.01"
                 min="0"
-                class="form-control"
+                class="form-control dark-form-control"
               />
               <div v-if="errores.precio_compra" class="invalid-feedback d-block">
                 {{ errores.precio_compra[0] }}
@@ -141,7 +141,7 @@
                 v-model="producto.stock_minimo"
                 type="number"
                 min="0"
-                class="form-control"
+                class="form-control dark-form-control"
               />
               <div v-if="errores.stock_minimo" class="invalid-feedback d-block">
                 {{ errores.stock_minimo[0] }}
@@ -154,7 +154,7 @@
                 v-model="producto.stock_maximo"
                 type="number"
                 min="0"
-                class="form-control"
+                class="form-control dark-form-control"
               />
               <div v-if="errores.stock_maximo" class="invalid-feedback d-block">
                 {{ errores.stock_maximo[0] }}
@@ -165,7 +165,7 @@
               <label class="form-label">Descripción</label>
               <textarea
                 v-model="producto.descripcion"
-                class="form-control"
+                class="form-control dark-form-control"
                 rows="3"
                 placeholder="Descripción corta (opcional)"
               ></textarea>
@@ -309,3 +309,4 @@ export default {
   font-size: 0.9rem;
 }
 </style>
+

@@ -1,92 +1,18 @@
 <template>
-  <div id="app" class="viicito-app">
-    <!-- Navigation -->
-    <nav class="navbar navbar-dark bg-dark sticky-top">
-      <div class="container-fluid">
-        <a class="navbar-brand d-flex align-items-center" href="/">
-          <span class="me-2">🍾</span>
-          <strong>Viicito</strong>&nbsp;<small>v1.0.0</small>
-        </a>
-        <div class="d-flex align-items-center" v-if="usuarioLogueado">
-          <span class="text-light me-3">{{ usuarioLogueado.name }}</span>
-          <button @click="logout" class="btn btn-sm btn-outline-light">Salir</button>
-        </div>
-        <div v-else>
-          <router-link to="/login" class="btn btn-sm btn-outline-light me-2">Iniciar Sesión</router-link>
-          <router-link to="/register" class="btn btn-sm btn-primary">Registrarse</router-link>
-        </div>
-      </div>
-    </nav>
+  <div id="app" class="viicito-app" style="background: #131313; color: #e5e2e1;">
+    <!-- Show layout only if user is authenticated -->
+    <template v-if="usuarioLogueado">
+      <AppLayout>
+        <template #default>
+          <router-view :key="$route.fullPath" />
+        </template>
+      </AppLayout>
+    </template>
 
-    <div class="container-fluid" v-if="usuarioLogueado">
-      <div class="row">
-        <!-- Sidebar -->
-        <nav class="col-md-2 d-md-block bg-light sidebar mt-2">
-          <ul class="nav flex-column">
-            <li class="nav-item" v-if="esOwner">
-              <router-link to="/owner-panel" class="nav-link" active-class="active">
-                🛠️ Panel Owner
-              </router-link>
-            </li>
-            <li class="nav-item" v-if="esOwner">
-              <router-link to="/" class="nav-link" active-class="active">
-                📊 Dashboard
-              </router-link>
-            </li>
-            <li class="nav-item">
-              <router-link to="/productos" class="nav-link" active-class="active">
-                🥃 Productos
-              </router-link>
-            </li>
-            <li class="nav-item">
-              <router-link to="/ventas" class="nav-link" active-class="active">
-                💳 Ventas
-              </router-link>
-            </li>
-            <li class="nav-item">
-              <router-link to="/nueva-venta" class="nav-link" active-class="active">
-                ➕ Nueva Venta
-              </router-link>
-            </li>
-            <li class="nav-item" v-if="esOwner">
-              <router-link to="/compras" class="nav-link" active-class="active">
-                📦 Compras
-              </router-link>
-            </li>
-            <li class="nav-item" v-if="esOwner">
-              <router-link to="/clientes" class="nav-link" active-class="active">
-                👥 Clientes
-              </router-link>
-            </li>
-            <li class="nav-item" v-if="esOwner">
-              <router-link to="/categorias" class="nav-link" active-class="active">
-                🏷️ Categorías
-              </router-link>
-            </li>
-            <li class="nav-item" v-if="esOwner">
-              <router-link to="/reportes" class="nav-link" active-class="active">
-                📈 Reportes
-              </router-link>
-            </li>
-            <li class="nav-item" v-if="esOwner">
-              <router-link to="/empleados" class="nav-link" active-class="active">
-                👔 Empleados
-              </router-link>
-            </li>
-          </ul>
-        </nav>
-
-        <!-- Main Content -->
-        <main class="col-md-9 ms-sm-auto px-md-4">
-          <router-view />
-        </main>
-      </div>
-    </div>
-
-    <!-- Login/Register Pages -->
-    <div v-else>
-      <router-view />
-    </div>
+    <!-- Show auth pages without layout -->
+    <template v-else>
+      <router-view :key="$route.fullPath" />
+    </template>
 
     <!-- Toast Notifications -->
     <div v-if="notificacion" class="toast-container position-fixed bottom-0 end-0 p-3">
@@ -101,38 +27,91 @@
 
 <script>
 import { api } from '@/services/api';
+import AppLayout from '@/layouts/AppLayout.vue';
 
 export default {
   name: 'App',
+  components: {
+    AppLayout
+  },
   data() {
     return {
       usuarioLogueado: null,
       notificacion: null,
+      usuarioCargado: false,
     };
   },
   computed: {
     esOwner() {
-      return this.usuarioLogueado?.role?.name === 'owner';
+      const rol = this.usuarioLogueado?.rol || 
+                  (typeof this.usuarioLogueado?.role === 'object' 
+                   ? this.usuarioLogueado?.role?.name 
+                   : this.usuarioLogueado?.role);
+      return rol?.toLowerCase?.() === 'owner' || rol === 'owner';
+    },
+    enRutaPublica() {
+      return this.$route.path === '/login' || this.$route.path === '/register';
+    }
+  },
+  watch: {
+    '$route.path'() {
+      if (!this.enRutaPublica && !this.usuarioCargado) {
+        this.cargarUsuario();
+      }
     }
   },
   mounted() {
-    this.cargarUsuario();
+    if (!this.enRutaPublica) {
+      this.cargarUsuario();
+    }
   },
   methods: {
-    cargarUsuario() {
+    async cargarUsuario() {
+      if (this.usuarioCargado || this.enRutaPublica) {
+        return;
+      }
+
       const user = localStorage.getItem('user');
+      
       if (user) {
-        this.usuarioLogueado = JSON.parse(user);
+        try {
+          const usuarioData = JSON.parse(user);
+          if (usuarioData.id_usuario || usuarioData.id) {
+            this.usuarioLogueado = usuarioData;
+            this.usuarioCargado = true;
+            return;
+          }
+        } catch (error) {
+          console.error('Error al parsear usuario:', error);
+          localStorage.removeItem('user');
+        }
+      }
+
+      try {
+        const response = await api.get('/user');
+        if (response.data && (response.data.id_usuario || response.data.id)) {
+          this.usuarioLogueado = response.data;
+          localStorage.setItem('user', JSON.stringify(response.data));
+        }
+      } catch (error) {
+        localStorage.removeItem('user');
+        if (!this.enRutaPublica) {
+          this.$router.push('/login');
+        }
+      } finally {
+        this.usuarioCargado = true;
       }
     },
+
     async logout() {
       try {
-        await api.post('/api/logout');
+        await api.post('/logout');
       } catch (error) {
         console.error('Error al cerrar sesión:', error);
       }
       localStorage.removeItem('user');
       this.usuarioLogueado = null;
+      this.usuarioCargado = false;
       this.$router.push('/login');
     },
   },

@@ -1,7 +1,7 @@
 <template>
   <div class="ventas-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h1>💳 Ventas</h1>
+      <h1 class="ventas-titulo">💳 Ventas</h1>
       <router-link to="/nueva-venta" class="btn btn-success btn-lg">
         ➕ Nueva Venta
       </router-link>
@@ -13,7 +13,7 @@
         <input
           v-model="filtros.fecha_inicio"
           type="date"
-          class="form-control"
+          class="form-control dark-form-control"
           @change="cargarVentas"
         />
       </div>
@@ -21,12 +21,12 @@
         <input
           v-model="filtros.fecha_final"
           type="date"
-          class="form-control"
+          class="form-control dark-form-control"
           @change="cargarVentas"
         />
       </div>
       <div class="col-md-2">
-        <select v-model="filtros.metodo_pago" class="form-select" @change="cargarVentas">
+        <select v-model="filtros.metodo_pago" class="form-select dark-form-select" @change="cargarVentas">
           <option value="">Todos los métodos</option>
           <option value="Efectivo">💵 Efectivo</option>
           <option value="Tarjeta">💳 Tarjeta</option>
@@ -34,7 +34,7 @@
         </select>
       </div>
       <div class="col-md-2">
-        <select v-model="filtros.estado" class="form-select" @change="cargarVentas">
+        <select v-model="filtros.estado" class="form-select dark-form-select" @change="cargarVentas">
           <option value="">Todos los estados</option>
           <option value="Completada">Completada</option>
           <option value="Cancelada">Cancelada</option>
@@ -85,18 +85,17 @@
     </div>
 
     <!-- Tabla de ventas -->
-    <div class="card">
-      <div class="card-body">
+    <div class="card dark-card">
+      <div class="card-body dark-card-body">
         <div v-if="cargando" class="text-center">
-          <div class="spinner-border" role="status"></div>
+          <div class="spinner-border text-warning" role="status"></div>
         </div>
         <div v-else-if="ventas.length > 0" class="table-responsive">
-          <table class="table table-striped">
-            <thead class="table-dark">
+          <table class="table table-dark table-striped table-hover dark-table">
+            <thead>
               <tr>
                 <th>Documento</th>
                 <th>Fecha/Hora</th>
-                <th>Cliente</th>
                 <th>Vendedor</th>
                 <th>Total</th>
                 <th>Método</th>
@@ -108,7 +107,6 @@
               <tr v-for="venta in ventas" :key="venta.id_venta">
                 <td><strong>{{ venta.numero_documento }}</strong></td>
                 <td>{{ formatFecha(venta.fecha_hora) }}</td>
-                <td>{{ venta.cliente?.nombre_razon_social }}</td>
                 <td>{{ venta.usuario?.nombre_completo }}</td>
                 <td class="fw-bold">{{ formatCurrency(venta.total_venta) }}</td>
                 <td>
@@ -184,8 +182,8 @@ export default {
       }
     },
     formatCurrency(value) {
-      if (!value) return '$0.00';
-      return `$${parseFloat(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+      if (!value) return 'Bs. 0.00';
+      return `Bs. ${parseFloat(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
     },
     formatFecha(fecha) {
       if (!fecha) return '-';
@@ -221,8 +219,88 @@ export default {
   padding: 2rem;
 }
 
-.card {
+.ventas-titulo {
+  color: var(--color-on-background, #e0e0e0);
+  margin-bottom: 1.5rem;
+}
+
+/* Dark Theme Input Controls */
+.dark-form-control {
+  background-color: rgba(50, 49, 49, 0.8);
+  border: 1px solid rgba(255, 191, 0, 0.3);
+  color: var(--color-on-background, #e0e0e0);
+}
+
+.dark-form-control:focus {
+  background-color: rgba(60, 59, 59, 0.9);
+  border-color: var(--color-primary-container, #ffbf00);
+  color: var(--color-on-background, #e0e0e0);
+  box-shadow: 0 0 0 0.2rem rgba(255, 191, 0, 0.25);
+}
+
+.dark-form-select {
+  background-color: rgba(50, 49, 49, 0.8);
+  border: 1px solid rgba(255, 191, 0, 0.3);
+  color: var(--color-on-background, #e0e0e0);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffbf00' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+}
+
+.dark-form-select:focus {
+  background-color: rgba(60, 59, 59, 0.9);
+  border-color: var(--color-primary-container, #ffbf00);
+  color: var(--color-on-background, #e0e0e0);
+  box-shadow: 0 0 0 0.2rem rgba(255, 191, 0, 0.25);
+}
+
+.dark-form-select option {
+  background-color: rgba(19, 19, 19, 0.95);
+  color: var(--color-on-background, #e0e0e0);
+}
+
+/* Dark Card */
+.dark-card {
+  background-color: rgba(28, 27, 27, 0.7);
+  border: 1px solid rgba(255, 191, 0, 0.2);
   border-radius: 0.5rem;
   box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+}
+
+.dark-card-body {
+  background-color: rgba(19, 19, 19, 0.6);
+}
+
+/* Dark Table */
+.dark-table {
+  background-color: rgba(19, 19, 19, 0.4);
+  color: var(--color-on-background, #e0e0e0);
+}
+
+.dark-table thead {
+  background-color: rgba(50, 49, 49, 0.6);
+  border-bottom: 2px solid rgba(255, 191, 0, 0.3);
+}
+
+.dark-table thead th {
+  color: var(--color-primary-container, #ffbf00);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dark-table tbody tr {
+  border-bottom: 1px solid rgba(255, 191, 0, 0.1);
+}
+
+.dark-table tbody tr:hover {
+  background-color: rgba(60, 59, 59, 0.5);
+}
+
+.dark-table tbody td {
+  color: var(--color-on-background, #e0e0e0);
+  padding: 1rem 0.75rem;
+}
+
+.card {
+  border-radius: 0.5rem;
 }
 </style>

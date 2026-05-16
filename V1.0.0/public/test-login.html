@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Login</title>
+    <style>
+        body { font-family: Arial; margin: 20px; }
+        input { display: block; margin: 10px 0; padding: 8px; width: 200px; }
+        button { padding: 10px 20px; }
+    </style>
+</head>
+<body>
+    <h1>Test de Login - Viicito</h1>
+    <div>
+        <input type="email" id="email" placeholder="Email" value="edimartorrezlobo@gmail.com">
+        <input type="password" id="password" placeholder="Password" value="password">
+        <button onclick="testLogin()">Probar Login</button>
+    </div>
+    <div id="result" style="margin-top: 20px; border: 1px solid black; padding: 10px;"></div>
+
+    <script>
+        async function testLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                // Obtener el CSRF token primero
+                const csrfResponse = await fetch('http://localhost:8000/login');
+                const csrfDoc = new DOMParser().parseFromString(await csrfResponse.text(), 'text/html');
+                const csrfToken = csrfDoc.querySelector('meta[name="csrf-token"]')?.content;
+                
+                console.log('CSRF Token:', csrfToken);
+                
+                const response = await fetch('http://localhost:8000/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken || '',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password })
+                });
+                
+                const data = await response.json();
+                resultDiv.innerHTML = '<pre>' + JSON.stringify(data, null, 2) + '</pre>';
+                
+                if (data.success && data.user) {
+                    console.log('Usuario logueado:', data.user);
+                    console.log('nombre_completo:', data.user.nombre_completo);
+                    console.log('id_usuario:', data.user.id_usuario);
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '<pre style="color: red;">' + error.message + '</pre>';
+            }
+        }
+    </script>
+</body>
+</html>

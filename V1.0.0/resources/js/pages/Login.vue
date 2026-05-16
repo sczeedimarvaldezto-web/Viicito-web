@@ -4,7 +4,7 @@
       <div class="card-header bg-primary text-white text-center">
         <h4>🍾 Viicito - Iniciar Sesión</h4>
       </div>
-      <div class="card-body">
+      <div class="card-body dark-card-body">
         <form @submit.prevent="handleLogin">
           <div class="mb-3">
             <label for="email" class="form-label">Correo Electrónico</label>
@@ -12,7 +12,7 @@
               type="email"
               id="email"
               v-model="form.email"
-              class="form-control"
+              class="form-control dark-form-control"
               :class="{ 'is-invalid': errors.email }"
               @input="validateEmail"
               required
@@ -26,7 +26,7 @@
               type="password"
               id="password"
               v-model="form.password"
-              class="form-control"
+              class="form-control dark-form-control"
               :class="{ 'is-invalid': errors.password }"
               @input="validatePassword"
               required
@@ -103,18 +103,29 @@ export default {
       if (!this.isFormValid) return;
 
       try {
+        // ✅ PASO 1: Obtener cookie CSRF de Sanctum
+        console.log('🔐 Solicitando cookie CSRF de Sanctum...');
+        await api.get('/sanctum/csrf-cookie');
+        console.log('✅ Cookie CSRF obtenida correctamente');
+
+        // ✅ PASO 2: Hacer login con las credenciales
+        console.log('🔑 Enviando credenciales de login...');
         const response = await api.post('/login', this.form);
+        
         if (response.data.success) {
           this.loginError = '';
           localStorage.setItem('user', JSON.stringify(response.data.user));
           if (this.$root) {
             this.$root.usuarioLogueado = response.data.user;
           }
-          this.$router.push(response.data.redirect || '/');
+          console.log('✅ Login exitoso, redirigiendo al dashboard...');
+          // Redirigir automáticamente al Dashboard como página de inicio
+          this.$router.push('/');
         } else {
           this.loginError = response.data.message || 'Credenciales incorrectas.';
         }
       } catch (error) {
+        console.error('❌ Error en login:', error.response?.data || error.message);
         if (error.response?.status === 401) {
           this.loginError = 'Credenciales incorrectas.';
         } else {

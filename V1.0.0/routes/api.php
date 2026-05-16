@@ -5,19 +5,22 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ProductoController;
 use App\Http\Controllers\Api\VentaController;
 use App\Http\Controllers\Api\CompraController;
-use App\Http\Controllers\Api\ClienteController;
 use App\Http\Controllers\Api\CategoriaController;
 use App\Http\Controllers\Api\DashboardController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\ProveedorController;
+use App\Http\Controllers\Api\ConfiguracionController;
 use App\Http\Middleware\EnsureUserRole;
 
 /**
  * API Routes - Viicito Sistema de Licorería
  * 
  * Version: v1
+ * Middleware: Sanctum para SPA con autenticación basada en sesiones
  */
 
-Route::middleware('web')->group(function () {
+// Middleware para SPA stateful - permite cookies de sesión en peticiones CORS
+Route::middleware(['web', \Illuminate\Session\Middleware\StartSession::class])->group(function () {
     // ============================================
     // AUTENTICACIÓN
     // ============================================
@@ -36,14 +39,15 @@ Route::middleware('web')->group(function () {
         Route::get('/dashboard/alertas-stock', [DashboardController::class, 'alertasStock']);
         Route::get('/dashboard/empleados', [DashboardController::class, 'empleados']);
 
-        Route::apiResource('clientes', ClienteController::class);
-        Route::get('/clientes/{cliente}/historial', [ClienteController::class, 'historial']);
-
         Route::apiResource('categorias', CategoriaController::class);
         Route::get('/categorias/{categoria}/productos', [CategoriaController::class, 'productos']);
 
         Route::apiResource('compras', CompraController::class);
         Route::post('/compras/{compra}/recibir', [CompraController::class, 'recibirItems']);
+
+        Route::apiResource('proveedores', ProveedorController::class);
+        Route::get('/configuracion', [ConfiguracionController::class, 'obtener']);
+        Route::post('/configuracion', [ConfiguracionController::class, 'guardar']);
     });
 
     // ============================================

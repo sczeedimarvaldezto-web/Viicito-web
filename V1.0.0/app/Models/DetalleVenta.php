@@ -15,7 +15,7 @@ class DetalleVenta extends Model
     use HasFactory;
 
     protected $table = 'detalle_venta';
-    protected $primaryKey = 'id_detalle_venta';
+    protected $primaryKey = 'id_detalle'; // ✅ Corregido: coincide con la migración
     public $timestamps = false;
 
     protected $fillable = [

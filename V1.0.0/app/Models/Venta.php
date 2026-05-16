@@ -20,7 +20,6 @@ class Venta extends Model
 
     protected $fillable = [
         'id_usuario',
-        'id_cliente',
         'numero_documento',
         'fecha_hora',
         'total_venta',
@@ -43,12 +42,7 @@ class Venta extends Model
     // Relationships
     public function usuario()
     {
-        return $this->belongsTo(Usuario::class, 'id_usuario', 'id_usuario');
-    }
-
-    public function cliente()
-    {
-        return $this->belongsTo(Cliente::class, 'id_cliente', 'id_cliente');
+        return $this->belongsTo(User::class, 'id_usuario', 'id');
     }
 
     public function detalles()

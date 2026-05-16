@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\User;
 use App\Models\Role;
+use App\Models\Categoria;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -16,19 +17,56 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        $role = Role::firstOrCreate([
+        // ==========================================
+        // CREAR ROLES
+        // ==========================================
+        $ownerRole = Role::firstOrCreate([
             'name' => 'owner',
         ], [
             'label' => 'Propietario',
         ]);
 
-        User::create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => bcrypt('password'),
-            'role_id' => $role->id,
+        $employeeRole = Role::firstOrCreate([
+            'name' => 'employee',
+        ], [
+            'label' => 'Empleado',
         ]);
+
+        // ==========================================
+        // CREAR USUARIOS
+        // ==========================================
+        User::create([
+            'name' => 'Edimar',
+            'email' => 'edimartorrezlobo@gmail.com',
+            'password' => bcrypt('password123'),
+            'role_id' => $ownerRole->id,
+        ]);
+
+        User::create([
+            'name' => 'Kevin',
+            'email' => 'kevin0202valdez@gmail.com',
+            'password' => bcrypt('password123'),
+            'role_id' => $employeeRole->id,
+        ]);
+
+        // ==========================================
+        // CREAR CATEGORÍAS
+        // ==========================================
+        $categorias = [
+            'Ron',
+            'Vodka',
+            'Whisky',
+            'Tequila',
+            'Ginebra',
+            'Vino',
+            'Cerveza',
+            'Licores',
+        ];
+
+        foreach ($categorias as $nombreCategoria) {
+            Categoria::firstOrCreate([
+                'nombre_categoria' => $nombreCategoria,
+            ]);
+        }
     }
 }

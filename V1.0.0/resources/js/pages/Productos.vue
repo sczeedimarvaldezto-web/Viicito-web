@@ -1,7 +1,7 @@
 <template>
   <div class="productos-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h1>🥃 Productos</h1>
+      <h1 class="productos-titulo">🥃 Productos</h1>
       <router-link to="/productos/nuevo" class="btn btn-primary">
         ➕ Nuevo Producto
       </router-link>
@@ -10,16 +10,27 @@
     <!-- Filtros -->
     <div class="row mb-3">
       <div class="col-md-3">
-        <input
-          v-model="filtros.buscar"
-          type="text"
-          class="form-control"
-          placeholder="Buscar por nombre, código..."
-          @input="buscar"
-        />
+        <div class="input-group dark-input-group">
+          <input
+            v-model="filtros.buscar"
+            type="text"
+            class="form-control dark-form-control"
+            placeholder="Buscar por nombre, código..."
+            @input="buscar"
+          />
+          <button 
+            v-if="filtros.buscar" 
+            @click="limpiarBusqueda" 
+            class="btn btn-dark-outline" 
+            type="button"
+            title="Limpiar búsqueda"
+          >
+            ✕
+          </button>
+        </div>
       </div>
       <div class="col-md-3">
-        <select v-model="filtros.categoria" class="form-select" @change="cargarProductos">
+        <select v-model="filtros.categoria" class="form-select dark-form-select" @change="cargarProductos">
           <option value="">Todas las categorías</option>
           <option v-for="cat in categorias" :key="cat.id_categoria" :value="cat.id_categoria">
             {{ cat.nombre_categoria }}
@@ -27,7 +38,7 @@
         </select>
       </div>
       <div class="col-md-3">
-        <select v-model="filtros.estado" class="form-select" @change="cargarProductos">
+        <select v-model="filtros.estado" class="form-select dark-form-select" @change="cargarProductos">
           <option value="">Todos los estados</option>
           <option value="Activo">Activo</option>
           <option value="Inactivo">Inactivo</option>
@@ -42,15 +53,15 @@
     </div>
 
     <!-- Tabla de productos -->
-    <div class="card">
-      <div class="card-body">
+    <div class="card dark-card">
+      <div class="card-body dark-card-body">
         <div v-if="cargando" class="text-center">
-          <div class="spinner-border" role="status">
+          <div class="spinner-border text-warning" role="status">
             <span class="visually-hidden">Cargando...</span>
           </div>
         </div>
         <div v-else-if="productos.length > 0" class="table-responsive">
-          <table class="table table-hover align-middle">
+          <table class="table table-dark table-hover align-middle dark-table">
             <thead>
               <tr>
                 <th class="text-center" style="width: 60px;">Img</th>
@@ -71,16 +82,15 @@
               >
                 <td class="text-center p-1">
                   <div 
-                    class="rounded d-flex align-items-center justify-content-center bg-light overflow-hidden shadow-sm"
-                    style="width: 45px; height: 45px;"
+                    class="product-image-container"
                   >
                     <img 
                       v-if="prod.imagen_url" 
                       :src="getImagenUrl(prod.imagen_url)" 
                       alt="Img" 
-                      style="width: 100%; height: 100%; object-fit: cover;"
+                      class="product-image"
                     />
-                    <small v-else class="text-muted" style="font-size: 0.65rem;">S/I</small>
+                    <small v-else class="text-muted">S/I</small>
                   </div>
                 </td>
                 <td>
@@ -88,7 +98,7 @@
                 </td>
                 <td><strong>{{ prod.nombre_producto }}</strong></td>
                 <td>{{ prod.categoria?.nombre_categoria || 'Sin categoría' }}</td>
-                <td>${{ parseFloat(prod.precio_venta).toFixed(2) }}</td>
+                <td>Bs. {{ parseFloat(prod.precio_venta).toFixed(2) }}</td>
                 <td>
                   <span
                     :class="[
@@ -123,7 +133,11 @@
           </table>
         </div>
         <div v-else class="text-center py-5">
-          <h4 class="text-muted mb-3">No hay productos registrados</h4>
+          <h4 class="text-muted mb-3">
+            {{ filtros.buscar || filtros.categoria || filtros.estado 
+              ? 'No se encontraron resultados' 
+              : 'No hay productos registrados' }}
+          </h4>
           <router-link to="/productos/nuevo" class="btn btn-primary">
             ➕ Añadir nuevo producto
           </router-link>
@@ -158,48 +172,48 @@
 
     <!-- Modal Editar Producto -->
     <div v-if="modalAbierto" class="modal-backdrop fade show"></div>
-    <div v-if="modalAbierto" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
+    <div v-if="modalAbierto" class="modal fade show d-block dark-modal" tabindex="-1">
       <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-          <div class="modal-header">
+        <div class="modal-content dark-modal-content">
+          <div class="modal-header dark-modal-header">
             <h5 class="modal-title">✏️ Editar Producto</h5>
-            <button type="button" class="btn-close" @click="cerrarEditar"></button>
+            <button type="button" class="btn-close btn-close-white" @click="cerrarEditar"></button>
           </div>
-          <div class="modal-body">
+          <div class="modal-body dark-modal-body">
             <div v-if="erroresGlobales" class="alert alert-danger">{{ erroresGlobales }}</div>
 
             <div class="row">
               <div class="col-md-6 mb-3">
-                <label>Nombre del Producto</label>
-                <input type="text" class="form-control" v-model="productoEditado.nombre_producto" required />
+                <label class="dark-label">Nombre del Producto</label>
+                <input type="text" class="form-control dark-form-control" v-model="productoEditado.nombre_producto" required />
               </div>
               <div class="col-md-6 mb-3">
-                <label>Código/SKU</label>
-                <input type="text" class="form-control" v-model="productoEditado.sku" />
+                <label class="dark-label">Código/SKU</label>
+                <input type="text" class="form-control dark-form-control" v-model="productoEditado.sku" />
               </div>
               <div class="col-md-6 mb-3">
-                <label>Precio de Venta</label>
-                <input type="number" class="form-control" v-model="productoEditado.precio_venta" min="0" step="0.01" required />
+                <label class="dark-label">Precio de Venta</label>
+                <input type="number" class="form-control dark-form-control" v-model="productoEditado.precio_venta" min="0" step="0.01" required />
               </div>
               <div class="col-md-6 mb-3">
-                <label>Precio de Compra</label>
-                <input type="number" class="form-control" v-model="productoEditado.precio_compra" min="0" step="0.01" />
+                <label class="dark-label">Precio de Compra</label>
+                <input type="number" class="form-control dark-form-control" v-model="productoEditado.precio_compra" min="0" step="0.01" />
               </div>
               <div class="col-md-6 mb-3">
-                <label>Stock Actual</label>
-                <input type="number" class="form-control" v-model="productoEditado.stock_actual" min="0" required />
+                <label class="dark-label">Stock Actual</label>
+                <input type="number" class="form-control dark-form-control" v-model="productoEditado.stock_actual" min="0" required />
               </div>
               <div class="col-md-6 mb-3">
-                <label>Stock Mínimo</label>
-                <input type="number" class="form-control" v-model="productoEditado.stock_minimo" min="0" />
+                <label class="dark-label">Stock Mínimo</label>
+                <input type="number" class="form-control dark-form-control" v-model="productoEditado.stock_minimo" min="0" />
               </div>
               <div class="col-md-6 mb-3">
-                <label>Grado Alcohólico</label>
-                <input type="number" class="form-control" v-model="productoEditado.grado_alcohol" min="0" step="0.1" />
+                <label class="dark-label">Grado Alcohólico</label>
+                <input type="number" class="form-control dark-form-control" v-model="productoEditado.grado_alcohol" min="0" step="0.1" />
               </div>
               <div class="col-md-6 mb-3">
-                <label>Categoría</label>
-                <select class="form-select" v-model="productoEditado.id_categoria">
+                <label class="dark-label">Categoría</label>
+                <select class="form-select dark-form-select" v-model="productoEditado.id_categoria">
                   <option value="">Sin categoría</option>
                   <option v-for="cat in categorias" :key="cat.id_categoria" :value="cat.id_categoria">
                     {{ cat.nombre_categoria }}
@@ -207,15 +221,44 @@
                 </select>
               </div>
               <div class="col-md-12 mb-3">
-                <label>Descripción</label>
-                <textarea class="form-control" v-model="productoEditado.descripcion" rows="2"></textarea>
+                <label class="dark-label">Descripción</label>
+                <textarea class="form-control dark-form-control" v-model="productoEditado.descripcion" rows="2"></textarea>
               </div>
             </div>
           </div>
-          <div class="modal-footer">
+          <div class="modal-footer dark-modal-footer">
             <button type="button" class="btn btn-secondary" @click="cerrarEditar">Cancelar</button>
             <button type="button" class="btn btn-primary" @click="guardarEdicion">
               Guardar Cambios
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Eliminar Producto -->
+    <div v-if="modalEliminarAbierto" class="modal-backdrop fade show"></div>
+    <div v-if="modalEliminarAbierto" class="modal fade show d-block dark-modal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content dark-modal-content">
+          <div class="modal-header dark-modal-header bg-danger">
+            <h5 class="modal-title">🗑️ Confirmar Eliminación</h5>
+            <button type="button" class="btn-close btn-close-white" @click="cerrarModalEliminar"></button>
+          </div>
+          <div class="modal-body dark-modal-body">
+            <p class="mb-0">
+              ¿Estás seguro de que deseas eliminar el producto <strong>"{{ productoAEliminar?.nombre_producto }}"</strong>?
+            </p>
+            <p class="text-muted small mt-2 mb-0">
+              Esta acción no se puede deshacer. El producto será archivado en la base de datos para mantener el historial de transacciones.
+            </p>
+          </div>
+          <div class="modal-footer dark-modal-footer">
+            <button type="button" class="btn btn-secondary" @click="cerrarModalEliminar" :disabled="eliminando">
+              Cancelar
+            </button>
+            <button type="button" class="btn btn-danger" @click="confirmarEliminacion" :disabled="eliminando">
+              {{ eliminando ? 'Eliminando...' : 'Sí, eliminar' }}
             </button>
           </div>
         </div>
@@ -257,6 +300,9 @@ export default {
       timeoutBusqueda: null,
       modalAbierto: false,
       productoEditado: {},
+      modalEliminarAbierto: false,
+      productoAEliminar: null,
+      eliminando: false,
       erroresGlobales: '',
       mensajeExito: '',
     };
@@ -308,6 +354,12 @@ export default {
       }, 500);
     },
 
+    limpiarBusqueda() {
+      this.filtros.buscar = '';
+      this.paginaActual = 1;
+      this.cargarProductos();
+    },
+
     mostrarTodos() {
       this.filtros = { buscar: '', categoria: '', estado: '' };
       this.paginaActual = 1;
@@ -322,15 +374,36 @@ export default {
     },
 
     async eliminar(producto) {
-      if (confirm(`¿Eliminar ${producto.nombre_producto}?`)) {
-        try {
-          await api.delete(`/productos/${producto.id_producto}`);
-          this.cargarProductos();
-          alert('Producto eliminado');
-        } catch (error) {
-          alert('Error al eliminar: ' + error.message);
-        }
+      this.productoAEliminar = producto;
+      this.modalEliminarAbierto = true;
+    },
+
+    async confirmarEliminacion() {
+      if (!this.productoAEliminar) return;
+      
+      this.eliminando = true;
+      try {
+        await api.delete(`/productos/${this.productoAEliminar.id_producto}`);
+        
+        // Eliminar reactivamente de la tabla
+        this.productos = this.productos.filter(
+          p => p.id_producto !== this.productoAEliminar.id_producto
+        );
+        
+        this.mensajeExito = `✅ Producto "${this.productoAEliminar.nombre_producto}" eliminado correctamente`;
+        setTimeout(() => this.mensajeExito = '', 4000);
+        
+        this.cerrarModalEliminar();
+      } catch (error) {
+        alert('Error al eliminar: ' + error.message);
+      } finally {
+        this.eliminando = false;
       }
+    },
+
+    cerrarModalEliminar() {
+      this.modalEliminarAbierto = false;
+      this.productoAEliminar = null;
     },
 
     estadoBadge(estado) {
@@ -415,12 +488,166 @@ export default {
   padding: 2rem;
 }
 
-.table-hover tbody tr:hover {
-  background-color: #f9f9f9;
+.productos-titulo {
+  color: var(--color-on-background, #e0e0e0);
+  margin-bottom: 1.5rem;
 }
 
+/* Dark Theme Input Controls */
+.dark-form-control {
+  background-color: rgba(50, 49, 49, 0.8);
+  border: 1px solid rgba(255, 191, 0, 0.3);
+  color: var(--color-on-background, #e0e0e0);
+}
+
+.dark-form-control:focus {
+  background-color: rgba(60, 59, 59, 0.9);
+  border-color: var(--color-primary-container, #ffbf00);
+  color: var(--color-on-background, #e0e0e0);
+  box-shadow: 0 0 0 0.2rem rgba(255, 191, 0, 0.25);
+}
+
+.dark-form-control::placeholder {
+  color: rgba(224, 224, 224, 0.5);
+}
+
+.dark-form-select {
+  background-color: rgba(50, 49, 49, 0.8);
+  border: 1px solid rgba(255, 191, 0, 0.3);
+  color: var(--color-on-background, #e0e0e0);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffbf00' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+}
+
+.dark-form-select:focus {
+  background-color: rgba(60, 59, 59, 0.9);
+  border-color: var(--color-primary-container, #ffbf00);
+  color: var(--color-on-background, #e0e0e0);
+  box-shadow: 0 0 0 0.2rem rgba(255, 191, 0, 0.25);
+}
+
+.dark-form-select option {
+  background-color: rgba(19, 19, 19, 0.95);
+  color: var(--color-on-background, #e0e0e0);
+}
+
+.dark-input-group {
+  display: flex;
+  align-items: center;
+}
+
+.btn-dark-outline {
+  background-color: rgba(50, 49, 49, 0.8);
+  border: 1px solid rgba(255, 191, 0, 0.3);
+  color: var(--color-on-background, #e0e0e0);
+}
+
+.btn-dark-outline:hover {
+  background-color: rgba(60, 59, 59, 0.9);
+  border-color: var(--color-primary-container, #ffbf00);
+  color: var(--color-primary-container, #ffbf00);
+}
+
+/* Dark Theme Table */
+.dark-card {
+  background-color: rgba(28, 27, 27, 0.7);
+  border: 1px solid rgba(255, 191, 0, 0.2);
+}
+
+.dark-card-body {
+  background-color: rgba(19, 19, 19, 0.6);
+}
+
+.dark-table {
+  background-color: rgba(19, 19, 19, 0.4);
+  color: var(--color-on-background, #e0e0e0);
+}
+
+.dark-table thead {
+  background-color: rgba(50, 49, 49, 0.6);
+  border-bottom: 2px solid rgba(255, 191, 0, 0.3);
+}
+
+.dark-table thead th {
+  color: var(--color-primary-container, #ffbf00);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.dark-table tbody tr {
+  border-bottom: 1px solid rgba(255, 191, 0, 0.1);
+}
+
+.dark-table tbody tr:hover {
+  background-color: rgba(60, 59, 59, 0.5);
+}
+
+.dark-table tbody td {
+  color: var(--color-on-background, #e0e0e0);
+  padding: 1rem 0.75rem;
+}
+
+/* Product Image */
+.product-image-container {
+  width: 45px;
+  height: 45px;
+  border-radius: 0.375rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 191, 0, 0.1);
+  border: 1px solid rgba(255, 191, 0, 0.2);
+  overflow: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.product-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* Dark Modal */
+.dark-modal {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.dark-modal-content {
+  background-color: rgba(19, 19, 19, 0.95);
+  border: 1px solid rgba(255, 191, 0, 0.2);
+  color: var(--color-on-background, #e0e0e0);
+}
+
+.dark-modal-header {
+  background-color: rgba(50, 49, 49, 0.6);
+  border-bottom: 1px solid rgba(255, 191, 0, 0.2);
+  color: var(--color-on-background, #e0e0e0);
+}
+
+.dark-modal-body {
+  background-color: rgba(19, 19, 19, 0.7);
+  color: var(--color-on-background, #e0e0e0);
+}
+
+.dark-modal-footer {
+  background-color: rgba(50, 49, 49, 0.6);
+  border-top: 1px solid rgba(255, 191, 0, 0.2);
+}
+
+.dark-label {
+  color: var(--color-on-background, #e0e0e0);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+/* Badges */
 .badge {
   font-size: 0.85rem;
   padding: 0.4rem 0.6rem;
+}
+
+.table-hover tbody tr:hover {
+  background-color: rgba(60, 59, 59, 0.5);
 }
 </style>

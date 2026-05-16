@@ -13,7 +13,7 @@
         <input
           v-model="filtros.fecha_inicio"
           type="date"
-          class="form-control"
+          class="form-control dark-form-control"
           @change="cargarCompras"
         />
       </div>
@@ -21,12 +21,12 @@
         <input
           v-model="filtros.fecha_final"
           type="date"
-          class="form-control"
+          class="form-control dark-form-control"
           @change="cargarCompras"
         />
       </div>
       <div class="col-md-3">
-        <select v-model="filtros.id_proveedor" class="form-select" @change="cargarCompras">
+        <select v-model="filtros.id_proveedor" class="form-select dark-form-select" @change="cargarCompras">
           <option value="">Todos los proveedores</option>
           <option v-for="proveedor in proveedores" :key="proveedor.id_proveedor" :value="proveedor.id_proveedor">
             {{ proveedor.nombre_empresa }}
@@ -34,7 +34,7 @@
         </select>
       </div>
       <div class="col-md-2">
-        <select v-model="filtros.estado" class="form-select" @change="cargarCompras">
+        <select v-model="filtros.estado" class="form-select dark-form-select" @change="cargarCompras">
           <option value="">Todos los estados</option>
           <option value="Pendiente">Pendiente</option>
           <option value="Parcial">Parcial</option>
@@ -52,7 +52,7 @@
     <div class="row mb-3">
       <div class="col-md-3">
         <div class="card bg-warning text-dark">
-          <div class="card-body">
+          <div class="card-body dark-card-body">
             <h6>Total Invertido</h6>
             <h3>{{ formatCurrency(totalInvertido) }}</h3>
           </div>
@@ -60,7 +60,7 @@
       </div>
       <div class="col-md-3">
         <div class="card bg-info text-white">
-          <div class="card-body">
+          <div class="card-body dark-card-body">
             <h6>Órdenes</h6>
             <h3>{{ compras.length }}</h3>
           </div>
@@ -68,7 +68,7 @@
       </div>
       <div class="col-md-3">
         <div class="card bg-danger text-white">
-          <div class="card-body">
+          <div class="card-body dark-card-body">
             <h6>Pendientes</h6>
             <h3>{{ pendientes }}</h3>
           </div>
@@ -76,7 +76,7 @@
       </div>
       <div class="col-md-3">
         <div class="card bg-success text-white">
-          <div class="card-body">
+          <div class="card-body dark-card-body">
             <h6>Completadas</h6>
             <h3>{{ completadas }}</h3>
           </div>
@@ -85,13 +85,13 @@
     </div>
 
     <!-- Tabla de compras -->
-    <div class="card">
-      <div class="card-body">
+    <div class="card dark-card">
+      <div class="card-body dark-card-body">
         <div v-if="cargando" class="text-center">
           <div class="spinner-border" role="status"></div>
         </div>
         <div v-else-if="compras.length > 0" class="table-responsive">
-          <table class="table table-striped">
+          <table class="table dark-table dark-table dark-table table-striped">
             <thead class="table-dark">
               <tr>
                 <th>Orden</th>
@@ -202,7 +202,7 @@ export default {
 
     formatCurrency(value) {
       if (!value) return '$0.00';
-      return `$${parseFloat(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+      return `Bs. ${parseFloat(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
     },
 
     formatFecha(fecha) {
@@ -237,3 +237,4 @@ export default {
   box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
 }
 </style>
+

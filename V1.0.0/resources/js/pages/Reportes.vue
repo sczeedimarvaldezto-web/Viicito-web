@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="reportes-container">
     <h1 class="mb-4">📊 Reportes</h1>
 
@@ -31,15 +31,6 @@
           📦 Inventario
         </button>
       </li>
-      <li class="nav-item" role="presentation">
-        <button
-          @click="tabActiva = 'clientes'"
-          :class="{ active: tabActiva === 'clientes' }"
-          class="nav-link"
-        >
-          👥 Clientes
-        </button>
-      </li>
     </ul>
 
     <!-- TAB: Reportes de Ventas -->
@@ -51,7 +42,7 @@
             v-model="filtrosVentas.fecha_inicio"
             @change="generarReporteVentas"
             type="date"
-            class="form-control"
+            class="form-control dark-form-control"
           />
         </div>
         <div class="col-md-2">
@@ -60,7 +51,7 @@
             v-model="filtrosVentas.fecha_final"
             @change="generarReporteVentas"
             type="date"
-            class="form-control"
+            class="form-control dark-form-control"
           />
         </div>
         <div class="col-md-3">
@@ -68,7 +59,7 @@
           <select
             v-model="filtrosVentas.metodo_pago"
             @change="generarReporteVentas"
-            class="form-select"
+            class="form-select dark-form-select"
           >
             <option value="">Todos</option>
             <option value="Efectivo">Efectivo</option>
@@ -87,7 +78,7 @@
       <div class="row mb-3">
         <div class="col-md-3">
           <div class="card bg-success text-white">
-            <div class="card-body">
+            <div class="card-body dark-card-body">
               <h6>Total Vendido</h6>
               <h3>{{ formatCurrency(reporteVentas.totalVentas) }}</h3>
             </div>
@@ -95,7 +86,7 @@
         </div>
         <div class="col-md-3">
           <div class="card bg-info text-white">
-            <div class="card-body">
+            <div class="card-body dark-card-body">
               <h6>Transacciones</h6>
               <h3>{{ reporteVentas.cantidadTransacciones }}</h3>
             </div>
@@ -103,7 +94,7 @@
         </div>
         <div class="col-md-3">
           <div class="card bg-primary text-white">
-            <div class="card-body">
+            <div class="card-body dark-card-body">
               <h6>Promedio/Venta</h6>
               <h3>{{ formatCurrency(reporteVentas.promedioVenta) }}</h3>
             </div>
@@ -111,7 +102,7 @@
         </div>
         <div class="col-md-3">
           <div class="card bg-warning text-dark">
-            <div class="card-body">
+            <div class="card-body dark-card-body">
               <h6>Margen Bruto</h6>
               <h3>{{ reporteVentas.margenBruto }}%</h3>
             </div>
@@ -119,35 +110,34 @@
         </div>
       </div>
 
-      <div class="card">
+      <div class="card dark-card">
         <div class="card-header fw-bold">Detalle de Ventas</div>
-        <div class="card-body">
+        <div class="card-body dark-card-body">
           <div v-if="ventasDetalle.length > 0" class="table-responsive">
-            <table class="table table-sm">
+            <table class="table dark-table table-hover table-sm detail-table">
               <thead class="table-dark">
                 <tr>
                   <th>Documento</th>
                   <th>Fecha</th>
-                  <th>Cliente</th>
                   <th>Subtotal</th>
                   <th>IVA</th>
-                  <th>Total</th>
+                  <th class="text-end">Total</th>
                   <th>Método</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="venta in ventasDetalle" :key="venta.id_venta">
-                  <td>{{ venta.numero_documento }}</td>
+                <tr v-for="venta in ventasDetalle" :key="venta.id_venta" class="text-light">
+                  <td class="fw-bold">{{ venta.numero_documento }}</td>
                   <td>{{ formatFecha(venta.fecha_hora) }}</td>
-                  <td>{{ venta.cliente?.nombre_razon_social }}</td>
                   <td>{{ formatCurrency(venta.subtotal) }}</td>
                   <td>{{ formatCurrency(venta.impuesto) }}</td>
-                  <td class="fw-bold">{{ formatCurrency(venta.total_venta) }}</td>
+                  <td class="fw-bold text-end text-success">{{ formatCurrency(venta.total_venta) }}</td>
                   <td><span class="badge bg-primary">{{ venta.metodo_pago }}</span></td>
                 </tr>
               </tbody>
             </table>
           </div>
+          <div v-else class="alert alert-info">No hay ventas en el período seleccionado</div>
         </div>
       </div>
     </div>
@@ -161,7 +151,7 @@
             v-model="filtrosCompras.fecha_inicio"
             @change="generarReporteCompras"
             type="date"
-            class="form-control"
+            class="form-control dark-form-control"
           />
         </div>
         <div class="col-md-2">
@@ -170,7 +160,7 @@
             v-model="filtrosCompras.fecha_final"
             @change="generarReporteCompras"
             type="date"
-            class="form-control"
+            class="form-control dark-form-control"
           />
         </div>
         <div class="col-md-4">
@@ -178,7 +168,7 @@
           <select
             v-model="filtrosCompras.id_proveedor"
             @change="generarReporteCompras"
-            class="form-select"
+            class="form-select dark-form-select"
           >
             <option value="">Todos</option>
             <option v-for="prov in proveedores" :key="prov.id_proveedor" :value="prov.id_proveedor">
@@ -197,7 +187,7 @@
       <div class="row mb-3">
         <div class="col-md-4">
           <div class="card bg-warning text-dark">
-            <div class="card-body">
+            <div class="card-body dark-card-body">
               <h6>Total Invertido</h6>
               <h3>{{ formatCurrency(reporteCompras.totalCompras) }}</h3>
             </div>
@@ -205,7 +195,7 @@
         </div>
         <div class="col-md-4">
           <div class="card bg-info text-white">
-            <div class="card-body">
+            <div class="card-body dark-card-body">
               <h6>Órdenes</h6>
               <h3>{{ reporteCompras.cantidadOrdenes }}</h3>
             </div>
@@ -213,7 +203,7 @@
         </div>
         <div class="col-md-4">
           <div class="card bg-danger text-white">
-            <div class="card-body">
+            <div class="card-body dark-card-body">
               <h6>Pendiente Recibir</h6>
               <h3>{{ formatCurrency(reporteCompras.pendienteRecibir) }}</h3>
             </div>
@@ -221,33 +211,34 @@
         </div>
       </div>
 
-      <div class="card">
+      <div class="card dark-card">
         <div class="card-header fw-bold">Detalle de Compras</div>
-        <div class="card-body">
+        <div class="card-body dark-card-body">
           <div v-if="comprasDetalle.length > 0" class="table-responsive">
-            <table class="table table-sm">
+            <table class="table dark-table table-hover table-sm detail-table">
               <thead class="table-dark">
                 <tr>
                   <th>Orden</th>
                   <th>Fecha</th>
                   <th>Proveedor</th>
-                  <th>Total</th>
+                  <th class="text-end">Total</th>
                   <th>Recibido</th>
                   <th>Estado</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="compra in comprasDetalle" :key="compra.id_compra">
-                  <td>{{ compra.numero_orden }}</td>
+                <tr v-for="compra in comprasDetalle" :key="compra.id_compra" class="text-light">
+                  <td class="fw-bold">{{ compra.numero_orden }}</td>
                   <td>{{ formatFecha(compra.fecha_pedido) }}</td>
                   <td>{{ compra.proveedor?.nombre_empresa }}</td>
-                  <td class="fw-bold">{{ formatCurrency(compra.total_compra) }}</td>
+                  <td class="fw-bold text-end">{{ formatCurrency(compra.total_compra) }}</td>
                   <td>{{ compra.cantidad_recibida }} / {{ compra.cantidad_solicitada }}</td>
                   <td><span class="badge" :class="estadoBadge(compra.estado)">{{ compra.estado }}</span></td>
                 </tr>
               </tbody>
             </table>
           </div>
+          <div v-else class="alert alert-info">No hay compras en el período seleccionado</div>
         </div>
       </div>
     </div>
@@ -259,7 +250,7 @@
           <input
             v-model="busquedaInventario"
             type="text"
-            class="form-control"
+            class="form-control dark-form-control"
             placeholder="Buscar producto..."
           />
         </div>
@@ -273,7 +264,7 @@
       <div class="row mb-3">
         <div class="col-md-4">
           <div class="card bg-primary text-white">
-            <div class="card-body">
+            <div class="card-body dark-card-body">
               <h6>Productos</h6>
               <h3>{{ reporteInventario.totalProductos }}</h3>
             </div>
@@ -281,7 +272,7 @@
         </div>
         <div class="col-md-4">
           <div class="card bg-info text-white">
-            <div class="card-body">
+            <div class="card-body dark-card-body">
               <h6>Valor Inventario</h6>
               <h3>{{ formatCurrency(reporteInventario.valorInventario) }}</h3>
             </div>
@@ -289,7 +280,7 @@
         </div>
         <div class="col-md-4">
           <div class="card bg-danger text-white">
-            <div class="card-body">
+            <div class="card-body dark-card-body">
               <h6>Stock Bajo</h6>
               <h3>{{ reporteInventario.stockBajo }}</h3>
             </div>
@@ -297,109 +288,34 @@
         </div>
       </div>
 
-      <div class="card">
+      <div class="card dark-card">
         <div class="card-header fw-bold">Inventario Completo</div>
-        <div class="card-body">
+        <div class="card-body dark-card-body">
           <div v-if="inventarioDetalle.length > 0" class="table-responsive">
-            <table class="table table-sm">
+            <table class="table dark-table table-hover table-sm detail-table">
               <thead class="table-dark">
                 <tr>
                   <th>Código</th>
                   <th>Producto</th>
                   <th>Categoría</th>
-                  <th>Stock</th>
-                  <th>Costo Unit.</th>
-                  <th>Valor Total</th>
+                  <th class="text-end">Stock</th>
+                  <th class="text-end">Costo Unit.</th>
+                  <th class="text-end">Valor Total</th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="prod in inventarioDetalle" :key="prod.id_producto">
-                  <td>{{ prod.sku }}</td>
+                <tr v-for="prod in inventarioDetalle" :key="prod.id_producto" class="text-light">
+                  <td class="fw-bold">{{ prod.sku }}</td>
                   <td>{{ prod.nombre_producto }}</td>
                   <td>{{ prod.categoria?.nombre_categoria }}</td>
-                  <td class="fw-bold">{{ prod.stock_actual }}</td>
-                  <td>{{ formatCurrency(prod.precio_costo) }}</td>
-                  <td>{{ formatCurrency(prod.stock_actual * prod.precio_costo) }}</td>
+                  <td class="text-end">{{ prod.stock_actual }}</td>
+                  <td class="text-end">{{ formatCurrency(prod.precio_costo) }}</td>
+                  <td class="text-end fw-bold text-warning">{{ formatCurrency(prod.stock_actual * prod.precio_costo) }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB: Clientes -->
-    <div v-if="tabActiva === 'clientes'" class="tab-content">
-      <div class="row mb-4">
-        <div class="col-md-6">
-          <input
-            v-model="busquedaClientes"
-            type="text"
-            class="form-control"
-            placeholder="Buscar cliente..."
-          />
-        </div>
-        <div class="col-md-6">
-          <button @click="exportarClientes" class="btn btn-info w-100">
-            📥 Exportar Clientes
-          </button>
-        </div>
-      </div>
-
-      <div class="row mb-3">
-        <div class="col-md-4">
-          <div class="card bg-primary text-white">
-            <div class="card-body">
-              <h6>Total Clientes</h6>
-              <h3>{{ reporteClientes.totalClientes }}</h3>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card bg-info text-white">
-            <div class="card-body">
-              <h6>Crédito Otorgado</h6>
-              <h3>{{ formatCurrency(reporteClientes.creditoOtorgado) }}</h3>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card bg-warning text-dark">
-            <div class="card-body">
-              <h6>Crédito por Cobrar</h6>
-              <h3>{{ formatCurrency(reporteClientes.creditoPorCobrar) }}</h3>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header fw-bold">Cartera de Clientes</div>
-        <div class="card-body">
-          <div v-if="clientesDetalle.length > 0" class="table-responsive">
-            <table class="table table-sm">
-              <thead class="table-dark">
-                <tr>
-                  <th>Cliente</th>
-                  <th>Tipo</th>
-                  <th>Teléfono</th>
-                  <th>Límite</th>
-                  <th>Usado</th>
-                  <th>Disponible</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="cliente in clientesDetalle" :key="cliente.id_cliente">
-                  <td>{{ cliente.nombre_razon_social }}</td>
-                  <td>{{ cliente.tipo_persona }}</td>
-                  <td>{{ cliente.telefono }}</td>
-                  <td>{{ formatCurrency(cliente.limite_credito) }}</td>
-                  <td>{{ formatCurrency(cliente.credito_utilizado) }}</td>
-                  <td>{{ formatCurrency(cliente.limite_credito - cliente.credito_utilizado) }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
+          <div v-else class="alert alert-info">No hay productos en el inventario</div>
         </div>
       </div>
     </div>
@@ -452,14 +368,6 @@ export default {
         stockBajo: 0,
       },
       inventarioDetalle: [],
-      // Clientes
-      busquedaClientes: '',
-      reporteClientes: {
-        totalClientes: 0,
-        creditoOtorgado: 0,
-        creditoPorCobrar: 0,
-      },
-      clientesDetalle: [],
     };
   },
   mounted() {
@@ -488,7 +396,7 @@ export default {
           promedioVenta: ventas.length > 0
             ? ventas.reduce((sum, v) => sum + parseFloat(v.total_venta || 0), 0) / ventas.length
             : 0,
-          margenBruto: 21, // IVA
+          margenBruto: 21,
         };
       } catch (error) {
         console.error('Error:', error);
@@ -532,31 +440,9 @@ export default {
       }
     },
 
-    async cargarClientes() {
-      try {
-        const response = await api.get('/clientes');
-        const clientes = response.data.data || response.data;
-        
-        this.clientesDetalle = clientes;
-        this.reporteClientes = {
-          totalClientes: clientes.length,
-          creditoOtorgado: clientes.reduce(
-            (sum, c) => sum + parseFloat(c.limite_credito || 0),
-            0
-          ),
-          creditoPorCobrar: clientes.reduce(
-            (sum, c) => sum + parseFloat(c.credito_utilizado || 0),
-            0
-          ),
-        };
-      } catch (error) {
-        console.error('Error:', error);
-      }
-    },
-
     formatCurrency(value) {
-      if (!value) return '$0.00';
-      return `$${parseFloat(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+      if (!value) return 'Bs. 0.00';
+      return `Bs. ${parseFloat(value).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
     },
 
     formatFecha(fecha) {
@@ -564,65 +450,171 @@ export default {
       return new Date(fecha).toLocaleString('es-ES');
     },
 
-    estadoBadge(estado) {
-      const badges = {
-        Pendiente: 'bg-warning',
-        Parcial: 'bg-info',
-        Completada: 'bg-success',
-      };
-      return badges[estado] || 'bg-primary';
+    exportarVentas() {
+      console.log('Exportando ventas...');
     },
 
-    exportarVentas() {
-      alert('Exportar a CSV en desarrollo');
-    },
     exportarCompras() {
-      alert('Exportar a CSV en desarrollo');
+      console.log('Exportando compras...');
     },
+
     exportarInventario() {
       this.cargarInventario();
-      alert('Exportar a CSV en desarrollo');
+      console.log('Exportando inventario...');
     },
-    exportarClientes() {
-      this.cargarClientes();
-      alert('Exportar a CSV en desarrollo');
-    },
-  },
+
+    estadoBadge(estado) {
+      const badges = {
+        'Pendiente': 'bg-warning',
+        'Completada': 'bg-success',
+        'Cancelada': 'bg-danger',
+        'Parcial': 'bg-info',
+      };
+      return badges[estado] || 'bg-secondary';
+    }
+  }
 };
 </script>
 
 <style scoped>
 .reportes-container {
-  padding: 2rem;
-}
-
-.nav-link {
-  color: #495057;
-  border-bottom: 3px solid transparent;
-  cursor: pointer;
-}
-
-.nav-link.active {
-  color: #0d6efd;
-  border-bottom-color: #0d6efd;
-  background: transparent;
+  padding: 20px;
 }
 
 .tab-content {
-  animation: fadeIn 0.3s;
+  animation: fadeIn 0.3s ease-in;
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
+    transform: translateY(10px);
   }
   to {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 
-.card {
-  border-radius: 0.5rem;
-  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
+.dark-card {
+  background-color: #1a1a1a;
+  border: 1px solid #333;
+  color: #e5e2e1;
+}
+
+.dark-card-body {
+  background-color: #131313;
+  color: #e5e2e1;
+}
+
+.card-header {
+  background-color: #0a0a0a;
+  border-bottom: 2px solid #ffbf00;
+  color: #ffbf00;
+}
+
+/* Mejorar legibilidad de tabla */
+.detail-table {
+  background-color: #1a1a1a;
+  margin-bottom: 0;
+}
+
+.detail-table thead {
+  background-color: #0a0a0a !important;
+  border-bottom: 2px solid #ffbf00;
+}
+
+.detail-table thead th {
+  color: #ffbf00 !important;
+  font-weight: 600;
+  padding: 12px 8px;
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #ffbf00;
+}
+
+.detail-table tbody tr {
+  background-color: #1a1a1a;
+  border-bottom: 1px solid #2a2a2a;
+  transition: all 0.2s ease;
+}
+
+.detail-table tbody tr:hover {
+  background-color: #252525;
+  box-shadow: inset 0 0 10px rgba(255, 191, 0, 0.08);
+  transform: translateX(2px);
+}
+
+.detail-table tbody td {
+  padding: 12px 8px;
+  vertical-align: middle;
+  color: #e5e2e1;
+  border-color: #2a2a2a;
+}
+
+.detail-table .text-success {
+  color: #4ade80 !important;
+  font-weight: 700;
+}
+
+.detail-table .text-warning {
+  color: #fbbf24 !important;
+  font-weight: 700;
+}
+
+.detail-table .text-light {
+  color: #e5e2e1 !important;
+}
+
+.detail-table .fw-bold {
+  font-weight: 700 !important;
+}
+
+.table-hover tbody tr:hover {
+  background-color: #252525 !important;
+}
+
+.nav-tabs {
+  border-bottom: 2px solid #ffbf00;
+}
+
+.nav-tabs .nav-link {
+  color: #a0a0a0;
+  border: none;
+  border-bottom: 3px solid transparent;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.nav-tabs .nav-link:hover {
+  color: #ffbf00;
+  border-bottom-color: #ffbf00;
+}
+
+.nav-tabs .nav-link.active {
+  color: #ffbf00;
+  background-color: transparent;
+  border-bottom-color: #ffbf00;
+}
+
+.badge {
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  font-weight: 500;
+}
+
+.alert {
+  background-color: #1a1a1a;
+  border-color: #333;
+  color: #e5e2e1;
+  border-left: 4px solid #ffbf00;
+}
+
+.alert-info {
+  background-color: #0a2f4a;
+  border-color: #1a5f7a;
+  color: #a8d4f0;
+  border-left-color: #3b9ec4;
 }
 </style>
