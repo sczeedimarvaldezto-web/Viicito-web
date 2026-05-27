@@ -133,6 +133,8 @@ class DashboardController extends Controller
      */
     public function alertasStock()
     {
+        $total = Producto::stockBajo()->count();
+
         $productos = Producto::stockBajo()
             ->with('categoria')
             ->selectRaw('*, (stock_minimo - stock_actual) as faltante')
@@ -141,7 +143,7 @@ class DashboardController extends Controller
             ->get();
 
         return response()->json([
-            'total_alertas' => $productos->count(),
+            'total_alertas' => $total,
             'productos' => $productos,
         ]);
     }

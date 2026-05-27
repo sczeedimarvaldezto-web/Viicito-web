@@ -263,6 +263,7 @@
 
 <script>
 import { api } from '@/services/api';
+import { notifyStockChanged } from '@/services/stockAlerts';
 
 export default {
   name: 'NuevaVenta',
@@ -477,6 +478,8 @@ export default {
         const response = await api.post('/ventas', payload);
 
         console.log('✅ Respuesta exitosa del servidor:', response.data);
+
+        notifyStockChanged();
 
         // Guardar la venta registrada
         this.ventaRegistrada = response.data.data || response.data;

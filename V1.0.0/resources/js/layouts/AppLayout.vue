@@ -13,9 +13,15 @@
 
       <div class="navbar-actions">
         <!-- Notifications -->
-        <button class="navbar-icon-btn">
+        <button
+          class="navbar-icon-btn"
+          :title="alertasStockCount > 0 ? `${alertasStockCount} producto(s) con stock bajo` : 'Sin alertas de stock'"
+          @click="irAlertasStock"
+        >
           <i class="bi bi-bell"></i>
-          <span v-if="notificacionesPendientes" class="notification-badge"></span>
+          <span v-if="alertasStockCount > 0" class="notification-badge">
+            {{ alertasStockCount > 99 ? '99+' : alertasStockCount }}
+          </span>
         </button>
 
         <!-- User Menu -->
@@ -118,6 +124,7 @@
 
 <script>
 import { api } from '@/services/api';
+import { fetchLowStockCount, STOCK_CHANGED_EVENT } from '@/services/stockAlerts';
 
 export default {
   name: 'AppLayout',
@@ -126,7 +133,8 @@ export default {
       sidebarOpen: false,
       mostrarUserMenu: false,
       usuarioLogueado: null,
-      notificacionesPendientes: false,
+      alertasStockCount: 0,
+      intervaloAlertas: null,
     };
   },
   computed: {
@@ -163,7 +171,16 @@ export default {
       } catch (error) {
         console.error('Error en logout:', error);
       }
-    }
+    },
+    async cargarAlertasStock() {
+      this.alertasStockCount = await fetchLowStockCount();
+    },
+    irAlertasStock() {
+      this.$router.push({ path: '/productos', query: { stock_bajo: '1' } });
+    },
+    onStockChanged() {
+      this.cargarAlertasStock();
+    },
   },
   mounted() {
     // Cerrar menú de usuario al hacer click fuera
@@ -175,7 +192,22 @@ export default {
 
     // Obtener datos del usuario
     this.usuarioLogueado = JSON.parse(localStorage.getItem('user')) || {};
-  }
+
+    this.cargarAlertasStock();
+    window.addEventListener(STOCK_CHANGED_EVENT, this.onStockChanged);
+    this.intervaloAlertas = setInterval(this.cargarAlertasStock, 60000);
+  },
+  beforeUnmount() {
+    window.removeEventListener(STOCK_CHANGED_EVENT, this.onStockChanged);
+    if (this.intervaloAlertas) {
+      clearInterval(this.intervaloAlertas);
+    }
+  },
+  watch: {
+    '$route.path'() {
+      this.cargarAlertasStock();
+    },
+  },
 };
 </script>
 
@@ -267,12 +299,21 @@ export default {
 
 .notification-badge {
   position: absolute;
-  top: 0.25rem;
-  right: 0.25rem;
-  width: 0.5rem;
-  height: 0.5rem;
+  top: 0;
+  right: 0;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.35rem;
   background-color: #ef4444;
-  border-radius: 50%;
+  border-radius: 9999px;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  border: 2px solid var(--color-surface-container-low);
 }
 
 .user-email {

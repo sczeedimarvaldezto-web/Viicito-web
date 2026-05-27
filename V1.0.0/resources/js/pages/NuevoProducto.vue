@@ -191,6 +191,7 @@
 
 <script>
 import { api } from '@/services/api';
+import { notifyStockChanged } from '@/services/stockAlerts';
 
 export default {
   name: 'NuevoProducto',
@@ -278,6 +279,7 @@ export default {
           },
         });
 
+        notifyStockChanged();
         this.mensajeExito = 'Producto registrado correctamente.';
         this.resetForm();
       } catch (error) {

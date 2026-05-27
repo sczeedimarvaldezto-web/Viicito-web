@@ -1,14 +1,24 @@
 <template>
   <div class="productos-container">
     <div class="d-flex justify-content-between align-items-center mb-4">
-      <h1 class="productos-titulo">🥃 Productos</h1>
-      <router-link to="/productos/nuevo" class="btn btn-primary">
+      <div>
+        <h1 class="productos-titulo mb-1">
+          {{ vistaAlertas ? '🔔 Productos con Stock Bajo' : '🥃 Productos' }}
+        </h1>
+        <p v-if="vistaAlertas" class="text-warning mb-0 small">
+          Productos cuyo stock actual es igual o inferior a su stock mínimo configurado.
+        </p>
+      </div>
+      <router-link v-if="!vistaAlertas" to="/productos/nuevo" class="btn btn-primary">
         ➕ Nuevo Producto
       </router-link>
+      <button v-else @click="mostrarTodos" class="btn btn-secondary">
+        ← Ver todos los productos
+      </button>
     </div>
 
     <!-- Filtros -->
-    <div class="row mb-3">
+    <div v-if="!vistaAlertas" class="row mb-3">
       <div class="col-md-3">
         <div class="input-group dark-input-group">
           <input
@@ -64,13 +74,14 @@
           <table class="table table-dark table-hover align-middle dark-table">
             <thead>
               <tr>
-                <th class="text-center" style="width: 60px;">Img</th>
-                <th>Código/SKU</th>
+                <th v-if="!vistaAlertas" class="text-center" style="width: 60px;">Img</th>
+                <th v-if="!vistaAlertas">Código/SKU</th>
                 <th>Nombre del Producto</th>
-                <th>Categoría</th>
-                <th>Precio de Venta</th>
+                <th v-if="!vistaAlertas">Categoría</th>
+                <th v-if="!vistaAlertas">Precio de Venta</th>
                 <th>Stock Actual</th>
-                <th>Estado</th>
+                <th>Stock Mínimo</th>
+                <th v-if="!vistaAlertas">Estado</th>
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -78,9 +89,9 @@
               <tr 
                 v-for="prod in productos" 
                 :key="prod.id_producto"
-                :class="{'table-danger': prod.stock_actual <= 5}"
+                :class="{'table-danger': esStockBajo(prod)}"
               >
-                <td class="text-center p-1">
+                <td v-if="!vistaAlertas" class="text-center p-1">
                   <div 
                     class="product-image-container"
                   >
@@ -93,26 +104,29 @@
                     <small v-else class="text-muted">S/I</small>
                   </div>
                 </td>
-                <td>
+                <td v-if="!vistaAlertas">
                   <small>{{ prod.codigo_barras || prod.sku || '-' }}</small>
                 </td>
                 <td><strong>{{ prod.nombre_producto }}</strong></td>
-                <td>{{ prod.categoria?.nombre_categoria || 'Sin categoría' }}</td>
-                <td>Bs. {{ parseFloat(prod.precio_venta).toFixed(2) }}</td>
+                <td v-if="!vistaAlertas">{{ prod.categoria?.nombre_categoria || 'Sin categoría' }}</td>
+                <td v-if="!vistaAlertas">Bs. {{ parseFloat(prod.precio_venta).toFixed(2) }}</td>
                 <td>
                   <span
                     :class="[
                       'badge',
-                      prod.stock_actual <= 5
-                        ? 'bg-danger'
-                        : 'bg-success',
+                      esStockBajo(prod) ? 'bg-danger' : 'bg-success',
                     ]"
                   >
-                    <span v-if="prod.stock_actual <= 5">⚠️ </span>
+                    <span v-if="esStockBajo(prod)">⚠️ </span>
                     {{ prod.stock_actual }}
                   </span>
                 </td>
                 <td>
+                  <span class="badge bg-secondary">
+                    {{ prod.stock_minimo ?? 0 }}
+                  </span>
+                </td>
+                <td v-if="!vistaAlertas">
                   <span :class="['badge', estadoBadge(prod.estado)]">
                     {{ prod.estado }}
                   </span>
@@ -134,11 +148,13 @@
         </div>
         <div v-else class="text-center py-5">
           <h4 class="text-muted mb-3">
-            {{ filtros.buscar || filtros.categoria || filtros.estado 
-              ? 'No se encontraron resultados' 
-              : 'No hay productos registrados' }}
+            {{ vistaAlertas
+              ? '✅ No hay productos con stock bajo en este momento'
+              : (filtros.buscar || filtros.categoria || filtros.estado 
+                ? 'No se encontraron resultados' 
+                : 'No hay productos registrados') }}
           </h4>
-          <router-link to="/productos/nuevo" class="btn btn-primary">
+          <router-link v-if="!vistaAlertas" to="/productos/nuevo" class="btn btn-primary">
             ➕ Añadir nuevo producto
           </router-link>
         </div>
@@ -282,6 +298,7 @@
 
 <script>
 import { api } from '@/services/api';
+import { isLowStock, notifyStockChanged } from '@/services/stockAlerts';
 
 export default {
   name: 'Productos',
@@ -296,6 +313,7 @@ export default {
         buscar: '',
         categoria: '',
         estado: '',
+        stock_bajo: '',
       },
       timeoutBusqueda: null,
       modalAbierto: false,
@@ -307,11 +325,29 @@ export default {
       mensajeExito: '',
     };
   },
+  computed: {
+    vistaAlertas() {
+      return this.filtros.stock_bajo === '1' || this.$route.query.stock_bajo === '1';
+    },
+  },
+  watch: {
+    '$route.query.stock_bajo'(val) {
+      this.filtros.stock_bajo = val === '1' ? '1' : '';
+      this.paginaActual = 1;
+      this.cargarProductos();
+    },
+  },
   mounted() {
+    if (this.$route.query.stock_bajo === '1') {
+      this.filtros.stock_bajo = '1';
+    }
     this.cargarCategorias();
     this.cargarProductos();
   },
   methods: {
+    esStockBajo(prod) {
+      return isLowStock(prod);
+    },
     async cargarProductos() {
       this.cargando = true;
       try {
@@ -361,9 +397,13 @@ export default {
     },
 
     mostrarTodos() {
-      this.filtros = { buscar: '', categoria: '', estado: '' };
+      this.filtros = { buscar: '', categoria: '', estado: '', stock_bajo: '' };
       this.paginaActual = 1;
-      this.cargarProductos();
+      if (this.$route.query.stock_bajo) {
+        this.$router.replace({ path: '/productos' });
+      } else {
+        this.cargarProductos();
+      }
     },
 
     irAPagina(page) {
@@ -464,10 +504,11 @@ export default {
         await api.put(`/productos/${this.productoEditado.id_producto}`, payload);
         
         this.mensajeExito = "Producto actualizado correctamente";
-        setTimeout(() => this.mensajeExito = '', 4000); // Ocultar toast
+        setTimeout(() => this.mensajeExito = '', 4000);
         
         this.cerrarEditar();
-        this.cargarProductos(); 
+        this.cargarProductos();
+        notifyStockChanged();
         
       } catch (error) {
         if (error.response && error.response.status === 422) {
