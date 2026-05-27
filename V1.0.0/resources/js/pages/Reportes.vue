@@ -37,19 +37,17 @@
     <div v-if="tabActiva === 'ventas'" class="tab-content">
       <div class="row mb-4">
         <div class="col-md-2">
-          <label class="form-label">Desde</label>
+          <label class="form-label">Fecha de Inicio</label>
           <input
             v-model="filtrosVentas.fecha_inicio"
-            @change="generarReporteVentas"
             type="date"
             class="form-control dark-form-control"
           />
         </div>
         <div class="col-md-2">
-          <label class="form-label">Hasta</label>
+          <label class="form-label">Fecha de Fin</label>
           <input
             v-model="filtrosVentas.fecha_final"
-            @change="generarReporteVentas"
             type="date"
             class="form-control dark-form-control"
           />
@@ -69,6 +67,9 @@
         </div>
         <div class="col-md-3">
           <label class="form-label">&nbsp;</label>
+          <button @click="generarReporteVentas" class="btn btn-primary w-100 mb-2">
+            🔎 Generar
+          </button>
           <button @click="exportarVentas" class="btn btn-info w-100">
             📥 Exportar CSV
           </button>
@@ -137,7 +138,7 @@
               </tbody>
             </table>
           </div>
-          <div v-else class="alert alert-info">No hay ventas en el período seleccionado</div>
+          <div v-else class="alert alert-info">No se encontraron ventas en el periodo seleccionado</div>
         </div>
       </div>
     </div>
@@ -386,6 +387,24 @@ export default {
 
     async generarReporteVentas() {
       try {
+        // Validar que fecha_inicio no sea posterior a fecha_final
+        if (this.filtrosVentas.fecha_inicio && this.filtrosVentas.fecha_final) {
+          const fechaInicio = new Date(this.filtrosVentas.fecha_inicio);
+          const fechaFinal = new Date(this.filtrosVentas.fecha_final);
+          
+          if (fechaInicio > fechaFinal) {
+            alert('❌ Error: La fecha de inicio no puede ser posterior a la fecha final. Por favor, ajuste el rango de fechas.');
+            this.ventasDetalle = [];
+            this.reporteVentas = {
+              totalVentas: 0,
+              cantidadTransacciones: 0,
+              promedioVenta: 0,
+              margenBruto: 0,
+            };
+            return;
+          }
+        }
+        
         const response = await api.get('/ventas', { params: this.filtrosVentas });
         const ventas = response.data.data || response.data;
         
@@ -405,6 +424,23 @@ export default {
 
     async generarReporteCompras() {
       try {
+        // Validar que fecha_inicio no sea posterior a fecha_final
+        if (this.filtrosCompras.fecha_inicio && this.filtrosCompras.fecha_final) {
+          const fechaInicio = new Date(this.filtrosCompras.fecha_inicio);
+          const fechaFinal = new Date(this.filtrosCompras.fecha_final);
+          
+          if (fechaInicio > fechaFinal) {
+            alert('❌ Error: La fecha de inicio no puede ser posterior a la fecha final. Por favor, ajuste el rango de fechas.');
+            this.comprasDetalle = [];
+            this.reporteCompras = {
+              totalCompras: 0,
+              cantidadOrdenes: 0,
+              pendienteRecibir: 0,
+            };
+            return;
+          }
+        }
+        
         const response = await api.get('/compras', { params: this.filtrosCompras });
         const compras = response.data.data || response.data;
         

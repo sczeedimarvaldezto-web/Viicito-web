@@ -6,7 +6,7 @@
       <!-- Panel de búsqueda de productos -->
       <div class="col-md-8">
         <div class="card mb-3 dark-card dark-card">
-          <div class="card-header fw-bold dark-card dark-card">Seleccione Productos</div>
+          <div class="card-header fw-bold dark-card dark-card text-white">Seleccione Productos</div>
           <div class="card-body dark-card-body dark-card dark-card-body dark-card dark-card-body">
             <!-- Búsqueda de productos -->
             <div class="input-group mb-3">
@@ -43,7 +43,7 @@
                 <span v-else class="badge bg-danger">Sin stock</span>
               </button>
             </div>
-            <div v-else class="text-muted text-center py-4">
+            <div v-else class="text-white text-center py-4">
               {{ busquedaProducto ? 'No encontrado' : 'Escriba para buscar productos' }}
             </div>
           </div>
@@ -53,7 +53,7 @@
       <!-- Panel de carrito -->
       <div class="col-md-4">
         <div class="card sticky-top dark-card dark-card" style="top: 20px">
-          <div class="card-header fw-bold dark-card dark-card">🛒 Carrito de Venta</div>
+          <div class="card-header fw-bold dark-card dark-card text-white">🛒 Carrito de Venta</div>
           <div class="card-body dark-card-body dark-card dark-card-body dark-card dark-card-body" style="max-height: 400px; overflow-y: auto">
             <div v-if="carrito.length > 0">
               <div v-for="(item, idx) in carrito" :key="idx" class="mb-3 pb-3 border-bottom">
@@ -99,7 +99,7 @@
                 </div>
               </div>
             </div>
-            <div v-else class="text-muted text-center py-4">
+            <div v-else class="text-white text-center py-4">
               Carrito vacío
             </div>
           </div>
@@ -135,7 +135,7 @@
             <button
               @click="completarVenta"
               :disabled="carrito.length === 0 || cargando"
-              class="btn btn-success w-100 btn-lg"
+              class="btn btn-success w-100 btn-lg text-white"
             >
               {{ cargando ? 'Procesando...' : '✓ Completar Venta' }}
             </button>

@@ -138,7 +138,7 @@
                 <i class="bi bi-chevron-right ms-auto"></i>
               </router-link>
 
-              <router-link to="/reportes" class="quick-action-btn">
+              <router-link v-if="esOwner" to="/reportes" class="quick-action-btn">
                 <i class="bi bi-graph-up-fill"></i>
                 <div>
                   <p class="font-semibold">Reportes</p>
@@ -147,7 +147,7 @@
                 <i class="bi bi-chevron-right ms-auto"></i>
               </router-link>
 
-              <router-link to="/categorias" class="quick-action-btn">
+              <router-link v-if="esOwner" to="/categorias" class="quick-action-btn">
                 <i class="bi bi-gear-fill"></i>
                 <div>
                   <p class="font-semibold">Configuración</p>
@@ -211,6 +211,13 @@ export default {
       cargando: true,
       error: null,
     };
+  },
+  computed: {
+    esOwner() {
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      const roleName = user?.rol || (typeof user?.role === 'object' ? user?.role?.name : user?.role);
+      return roleName === 'owner';
+    }
   },
   mounted() {
     this.cargarDatos();

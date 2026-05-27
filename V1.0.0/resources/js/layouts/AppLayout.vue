@@ -74,6 +74,7 @@
           </router-link>
 
           <router-link
+            v-if="esOwner"
             to="/proveedores"
             class="nav-link"
             :class="{ 'active': $route.path === '/proveedores' }"
@@ -84,6 +85,7 @@
           </router-link>
 
           <router-link
+            v-if="esOwner"
             to="/reportes"
             class="nav-link"
             :class="{ 'active': $route.path === '/reportes' }"
@@ -94,6 +96,7 @@
           </router-link>
 
           <router-link
+            v-if="esOwner"
             to="/configuracion"
             class="nav-link"
             :class="{ 'active': $route.path === '/configuracion' }"
@@ -150,6 +153,13 @@ export default {
         'employee': 'Empleado'
       };
       return roleMap[roleName] || 'Usuario';
+    },
+    esOwner() {
+      const roleName = this.usuarioLogueado?.rol || 
+                       (typeof this.usuarioLogueado?.role === 'object' 
+                        ? this.usuarioLogueado.role.name 
+                        : this.usuarioLogueado?.role);
+      return roleName === 'owner';
     }
   },
   methods: {
