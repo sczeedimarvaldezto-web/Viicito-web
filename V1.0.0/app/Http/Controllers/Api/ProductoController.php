@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Http\Requests\StoreProductoRequest;
+use App\Http\Requests\UpdateProductoRequest;
 use App\Models\Producto;
-use App\Models\Categoria;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\File;
 
 /**
  * ProductoController
- * 
+ *
  * API REST para gestión de productos
  */
 class ProductoController extends Controller
@@ -19,31 +21,8 @@ class ProductoController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Producto::with('categoria');
+        $query = Producto::queryInventario($request);
 
-        // Filtros
-        if ($request->has('categoria')) {
-            $query->where('id_categoria', $request->categoria);
-        }
-
-        if ($request->has('estado')) {
-            $query->where('estado', $request->estado);
-        }
-
-        if ($request->has('stock_bajo')) {
-            $query->whereRaw('stock_actual <= stock_minimo');
-        }
-
-        if ($request->has('buscar')) {
-            $buscar = $request->buscar;
-            $query->where(function ($q) use ($buscar) {
-                $q->where('nombre_producto', 'like', "%{$buscar}%")
-                  ->orWhere('codigo_barras', 'like', "%{$buscar}%")
-                  ->orWhere('sku', 'like', "%{$buscar}%");
-            });
-        }
-
-        // Paginación
         $productos = $query->paginate($request->get('per_page', 15));
 
         return response()->json($productos);
@@ -54,58 +33,43 @@ class ProductoController extends Controller
      */
     public function show(Producto $producto)
     {
-        return response()->json($producto->load('categoria'));
+        return response()->json($producto->load(['categoria', 'marca']));
     }
 
     /**
      * POST /api/productos - Crear producto
      */
-    public function store(Request $request)
+    public function store(StoreProductoRequest $request)
     {
-        $validated = $request->validate([
-            'id_categoria' => 'required|exists:categoria,id_categoria',
-            'nombre_producto' => 'required|string|max:100',
-            'codigo_barras' => 'nullable|unique:producto,codigo_barras',
-            'sku' => 'nullable|unique:producto,sku',
-            'precio_compra' => 'required|numeric|min:0',
-            'precio_venta' => 'required|numeric|gt:precio_compra',
-            'stock_actual' => 'integer|min:0',
-            'stock_minimo' => 'integer|min:0',
-            'stock_maximo' => 'integer|min:0',
-            'volumen_ml' => 'nullable|integer',
-            'grado_alcohol' => 'nullable|numeric',
-            'descripcion' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
+
+        if ($request->hasFile('imagen_producto')) {
+            $validated['imagen_url'] = $this->guardarImagen($request);
+        }
+
+        $validated['precio_compra'] = $validated['precio_compra'] ?? 0;
+        $validated['stock_minimo'] = $validated['stock_minimo'] ?? 0;
+        $validated['stock_maximo'] = $validated['stock_maximo'] ?? 0;
 
         $producto = Producto::create($validated);
 
-        return response()->json($producto->load('categoria'), Response::HTTP_CREATED);
+        return response()->json($producto->load(['categoria', 'marca']), Response::HTTP_CREATED);
     }
 
     /**
      * PUT /api/productos/{id} - Actualizar producto
      */
-    public function update(Request $request, Producto $producto)
+    public function update(UpdateProductoRequest $request, Producto $producto)
     {
-        $validated = $request->validate([
-            'id_categoria' => 'exists:categoria,id_categoria',
-            'nombre_producto' => 'string|max:100',
-            'codigo_barras' => 'nullable|unique:producto,codigo_barras,' . $producto->id_producto . ',id_producto',
-            'sku' => 'nullable|unique:producto,sku,' . $producto->id_producto . ',id_producto',
-            'precio_compra' => 'numeric|min:0',
-            'precio_venta' => 'numeric|min:0',
-            'stock_actual' => 'integer|min:0',
-            'stock_minimo' => 'integer|min:0',
-            'stock_maximo' => 'integer|min:0',
-            'volumen_ml' => 'nullable|integer',
-            'grado_alcohol' => 'nullable|numeric',
-            'estado' => 'in:Activo,Descontinuado,Suspendido',
-            'descripcion' => 'nullable|string',
-        ]);
+        $validated = $request->validated();
+
+        if ($request->hasFile('imagen_producto')) {
+            $validated['imagen_url'] = $this->guardarImagen($request);
+        }
 
         $producto->update($validated);
 
-        return response()->json($producto->load('categoria'));
+        return response()->json($producto->load(['categoria', 'marca']));
     }
 
     /**
@@ -122,7 +86,21 @@ class ProductoController extends Controller
      */
     public function stockBajo()
     {
-        $productos = Producto::stockBajo()->with('categoria')->paginate(15);
+        $productos = Producto::stockBajo()->with(['categoria', 'marca'])->paginate(15);
         return response()->json($productos);
+    }
+
+    private function guardarImagen(Request $request): string
+    {
+        $uploadPath = public_path('uploads/productos');
+        if (!File::exists($uploadPath)) {
+            File::makeDirectory($uploadPath, 0755, true);
+        }
+
+        $file = $request->file('imagen_producto');
+        $filename = time() . '_' . uniqid() . '.' . $file->getClientOriginalExtension();
+        $file->move($uploadPath, $filename);
+
+        return 'uploads/productos/' . $filename;
     }
 }

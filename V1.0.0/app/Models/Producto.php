@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
  * Producto Model
@@ -12,7 +13,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Producto extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     protected $table = 'producto';
     protected $primaryKey = 'id_producto';
@@ -20,6 +21,7 @@ class Producto extends Model
 
     protected $fillable = [
         'id_categoria',
+        'id_marca',
         'codigo_barras',
         'sku',
         'nombre_producto',
@@ -31,6 +33,7 @@ class Producto extends Model
         'stock_maximo',
         'volumen_ml',
         'grado_alcohol',
+        'imagen_url',
         'estado',
     ];
 
@@ -49,6 +52,11 @@ class Producto extends Model
     public function categoria()
     {
         return $this->belongsTo(Categoria::class, 'id_categoria', 'id_categoria');
+    }
+
+    public function marca()
+    {
+        return $this->belongsTo(Marca::class, 'id_marca', 'id_marca');
     }
 
     public function detallesVenta()
@@ -92,6 +100,50 @@ class Producto extends Model
     public function scopePorCategoria($query, $id_categoria)
     {
         return $query->where('id_categoria', $id_categoria);
+    }
+
+    public function scopePorMarca($query, $id_marca)
+    {
+        return $query->where('id_marca', $id_marca);
+    }
+
+    /**
+     * Construye la consulta base del inventario con relaciones y filtros.
+     * Soporta ?category= / ?categoria= y ?brand= / ?marca=
+     */
+    public static function queryInventario($request)
+    {
+        $query = static::with(['categoria', 'marca']);
+
+        $categoryId = $request->input('category', $request->input('categoria'));
+        $brandId = $request->input('brand', $request->input('marca'));
+
+        if ($categoryId) {
+            $query->where('id_categoria', $categoryId);
+        }
+
+        if ($brandId) {
+            $query->where('id_marca', $brandId);
+        }
+
+        if ($request->has('estado')) {
+            $query->where('estado', $request->estado);
+        }
+
+        if ($request->has('stock_bajo')) {
+            $query->whereRaw('stock_actual <= stock_minimo');
+        }
+
+        if ($request->has('buscar')) {
+            $buscar = $request->buscar;
+            $query->where(function ($q) use ($buscar) {
+                $q->where('nombre_producto', 'like', "%{$buscar}%")
+                  ->orWhere('codigo_barras', 'like', "%{$buscar}%")
+                  ->orWhere('sku', 'like', "%{$buscar}%");
+            });
+        }
+
+        return $query;
     }
 
     public function scopePorCodigoBarras($query, $codigo)

@@ -38,6 +38,7 @@ class Categoria extends Model
     // Scopes
     public function scopeActivas($query)
     {
-        return $query->where('estado', 'Activo');
+        // El campo estado no existe en la BD actual. Se retorna el query intacto.
+        return $query;
     }
 }

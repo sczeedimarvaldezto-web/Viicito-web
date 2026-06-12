@@ -82,7 +82,14 @@ class AuthController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => $isOwnerRegistering ? 'Usuario creado exitosamente.' : 'Usuario registrado exitosamente.',
-                'user' => $user,
+                'user' => [
+                    'id_usuario' => $user->id,
+                    'nombre_completo' => $user->name,
+                    'email' => $user->email,
+                    'username' => $user->name,
+                    'rol' => $user->role?->name ?? 'owner',
+                    'estado' => 'Activo',
+                ],
                 'role' => $user->role?->name,
                 'isNewUser' => $isFirstUser,
             ], 201);
@@ -121,7 +128,14 @@ class AuthController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Inicio de sesión exitoso.',
-                'user' => $user,
+                'user' => [
+                    'id_usuario' => $user->id,
+                    'nombre_completo' => $user->name,
+                    'email' => $user->email,
+                    'username' => $user->name,
+                    'rol' => $user->role?->name ?? 'owner',
+                    'estado' => 'Activo',
+                ],
                 'role' => $user->role?->name,
                 'redirect' => $user->hasRole('owner') ? '/owner-panel' : '/ventas'
             ]);
@@ -154,8 +168,21 @@ class AuthController extends Controller
      */
     public function user(Request $request)
     {
+        if (!$request->user()) {
+            return response()->json([
+                'error' => 'No autenticado'
+            ], 401);
+        }
+
+        $user = $request->user()->load('role');
+        
         return response()->json([
-            'user' => $request->user()
+            'id_usuario' => $user->id,
+            'nombre_completo' => $user->name,
+            'email' => $user->email,
+            'username' => $user->name,
+            'rol' => $user->role?->name ?? 'owner',
+            'estado' => 'Activo',
         ]);
     }
 }

@@ -5,16 +5,16 @@
     <div class="row">
       <!-- Panel de búsqueda de productos -->
       <div class="col-md-8">
-        <div class="card mb-3">
-          <div class="card-header fw-bold">Seleccione Productos a Comprar</div>
-          <div class="card-body">
+        <div class="card mb-3 dark-card dark-card">
+          <div class="card-header fw-bold dark-card dark-card">Seleccione Productos a Comprar</div>
+          <div class="card-body dark-card-body dark-card dark-card-body dark-card dark-card-body">
             <!-- Búsqueda de productos -->
             <div class="input-group mb-3">
               <input
                 v-model="busquedaProducto"
                 @input="buscarProductos"
                 type="text"
-                class="form-control"
+                class="form-control dark-form-control dark-form-control dark-form-control"
                 placeholder="Buscar por nombre o código..."
               />
               <button @click="limpiarBusqueda" class="btn btn-secondary">
@@ -33,7 +33,7 @@
                 <div>
                   <h6 class="mb-1">{{ prod.nombre_producto }}</h6>
                   <small class="text-muted">
-                    Costo actual: ${{ prod.precio_costo }} | Categoría: {{ prod.categoria?.nombre_categoria }}
+                    Costo actual: Bs. {{ prod.precio_costo }} | Categoría: {{ prod.categoria?.nombre_categoria }}
                   </small>
                 </div>
                 <span class="badge bg-primary">Agregar</span>
@@ -48,9 +48,9 @@
 
       <!-- Panel de detalles de compra -->
       <div class="col-md-4">
-        <div class="card sticky-top" style="top: 20px">
-          <div class="card-header fw-bold">📋 Detalles de Compra</div>
-          <div class="card-body" style="max-height: 400px; overflow-y: auto">
+        <div class="card sticky-top dark-card dark-card" style="top: 20px">
+          <div class="card-header fw-bold dark-card dark-card">📋 Detalles de Compra</div>
+          <div class="card-body dark-card-body dark-card dark-card-body dark-card dark-card-body" style="max-height: 400px; overflow-y: auto">
             <div v-if="items.length > 0">
               <div v-for="(item, idx) in items" :key="idx" class="mb-3 pb-3 border-bottom">
                 <div class="d-flex justify-content-between mb-2">
@@ -70,7 +70,7 @@
                       @change="recalcularTotal"
                       type="number"
                       min="1"
-                      class="form-control form-control-sm"
+                      class="form-control form-control-sm dark-form-control dark-form-control"
                     />
                   </div>
                   <div class="col-6">
@@ -80,13 +80,13 @@
                       @change="recalcularTotal"
                       type="number"
                       step="0.01"
-                      class="form-control form-control-sm"
+                      class="form-control form-control-sm dark-form-control dark-form-control"
                     />
                   </div>
                 </div>
                 <div>
                   <small class="text-muted">
-                    Subtotal: ${{ (item.cantidad * item.precio_unitario).toFixed(2) }}
+                    Subtotal: Bs. {{ (item.cantidad * item.precio_unitario).toFixed(2) }}
                   </small>
                 </div>
               </div>
@@ -97,10 +97,10 @@
           </div>
 
           <!-- Datos proveedor y resumen -->
-          <div class="card-footer">
+          <div class="card-footer dark-card dark-card">
             <div class="mb-3">
               <label class="form-label">Proveedor</label>
-              <select v-model="compra.id_proveedor" class="form-select form-select-sm">
+              <select v-model="compra.id_proveedor" class="form-select form-select-sm dark-form-select dark-form-select">
                 <option value="">Seleccionar proveedor</option>
                 <option v-for="prov in proveedores" :key="prov.id_proveedor" :value="prov.id_proveedor">
                   {{ prov.nombre_empresa }}
@@ -112,7 +112,7 @@
               <label class="form-label">Observaciones</label>
               <textarea
                 v-model="compra.observaciones"
-                class="form-control form-control-sm"
+                class="form-control form-control-sm dark-form-control dark-form-control"
                 rows="2"
                 placeholder="Notas adicionales..."
               ></textarea>
@@ -288,3 +288,4 @@ export default {
   z-index: 100;
 }
 </style>
+

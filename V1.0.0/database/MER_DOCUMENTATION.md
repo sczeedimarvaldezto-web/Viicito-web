@@ -23,58 +23,55 @@
                     │            │            │
                     │1:N         │1:N         │1:N
                     │            │            │
-          ┌─────────┴──────┐  ┌──┴───────┐ ┌──┴───────────┐
-          │     venta      │  │  compra  │ │   cliente    │
-          ├────────────────┤  ├──────────┤ ├──────────────┤
-          │ id_venta PK    │  │id_compra │ │ id_cliente PK│
-          │ id_usuario FK  │  │id_usuario│ │ nombre       │
-          │ id_cliente FK  │  │id_proveedor FK
-          │ fecha_hora     │  │ fecha    │ │ nit_ci UNIQUE│
-          │ total_venta    │  │ estado   │ │ saldo_actual │
-          │ metodo_pago    │  │ estado   │ │ limite_credito
-          │ estado ENUM    │  │          │ │ vendedor_asignado FK
-          └────────┬───────┘  └──────────┘ └──────────────┘
-                   │                              ▲
-                   │1:N                           │
-                   │                            1:N
-          ┌────────▼──────────────┐              │
-          │  detalle_venta       │              │
-          ├──────────────────────┤              │
-          │id_detalle_venta PK   │              │
-          │id_venta FK (CASCADE) │──┐           │
-          │id_producto FK        │  │     ┌─────┴──────────┐
-          │cantidad              │  │     │   proveedor    │
-          │precio_unitario       │  │     ├────────────────┤
-          │descuento             │  │     │id_proveedor PK │
-          │subtotal              │  │     │nombre_empresa  │
-          └──────────────────────┘  │     │contacto        │
-                                    │     │estado_proveedor│
-                   ┌────────────────┘     └────────────────┘
+          ┌─────────┴──────┐  ┌──┴───────────┐ ┌──────────────┐
+          │     venta      │  │   compra     │ │  proveedor   │
+          ├────────────────┤  ├──────────────┤ ├──────────────┤
+          │ id_venta PK    │  │id_compra PK  │ │id_proveedor PK
+          │ id_usuario FK  │  │id_usuario FK │ │ nombre_empresa
+          │ fecha_hora     │  │id_proveedor FK│ contacto
+          │ total_venta    │  │ fecha        │ │ estado
+          │ metodo_pago    │  │ total_compra │ │
+          │ estado ENUM    │  │              │ │
+          └────────┬───────┘  └──────────────┘ └──────────────┘
                    │
-                ┌──▼───────────────┐
-                │    producto      │
-                ├──────────────────┤
-                │ id_producto PK   │
-                │ id_categoria FK  │
-                │ codigo_barras    │
-                │ nombre           │
-                │ precio_compra    │
-                │ precio_venta     │
-                │ stock_actual     │
-                │ stock_minimo     │
-                │ estado ENUM      │
-                └──────────────────┘
-                        ▲
-                        │1:N
-                        │
-                ┌───────┴──────────┐
-                │    categoria     │
-                ├──────────────────┤
-                │id_categoria PK   │
-                │nombre_categoria U│
-                │descripcion       │
-                │estado ENUM       │
-                └──────────────────┘
+                   │1:N
+          ┌────────▼──────────────┐
+          │  detalle_venta       │
+          ├──────────────────────┤
+          │id_detalle_venta PK   │
+          │id_venta FK (CASCADE) │
+          │id_producto FK        │
+          │cantidad              │
+          │precio_unitario       │
+          │descuento             │
+          │subtotal              │
+          └──────────┬───────────┘
+                     │
+                     │1:N
+          ┌──────────▼────────────┐     ┌────────────────┐
+          │      producto         │────→│   categoria    │
+          ├──────────────────────┤ 1:N ├────────────────┤
+          │ id_producto PK       │     │id_categoria PK │
+          │ id_categoria FK      │     │nombre_categoria│
+          │ codigo_barras        │     │descripcion     │
+          │ nombre               │     │estado ENUM     │
+          │ precio_compra        │     └────────────────┘
+          │ precio_venta         │
+          │ stock_actual         │
+          │ stock_minimo         │
+          │ estado ENUM          │
+          └──────────────────────┘
+
+          ┌───────────────────────┐     ┌──────────────┐
+          │  detalle_compra       │────→│   producto   │
+          ├───────────────────────┤ 1:N ├──────────────┤
+          │id_detalle_compra PK   │     │ (ver arriba) │
+          │id_compra FK (CASCADE) │     └──────────────┘
+          │id_producto FK         │
+          │cantidad               │
+          │costo_unitario         │
+          │subtotal               │
+          └───────────────────────┘
 
 
                             ┌──────────────┐
@@ -103,55 +100,43 @@
 - Acción DELETE: **RESTRICT**
 - Acción UPDATE: **CASCADE**
 
-### 3. cliente → venta (1:N)
-- Un cliente realiza múltiples compras
-- FK: `venta.id_cliente` → `cliente.id_cliente`
-- Acción DELETE: **RESTRICT**
-- Acción UPDATE: **CASCADE**
-
-### 4. usuario → cliente (1:N)
-- Un vendedor puede tener múltiples clientes asignados
-- FK: `cliente.vendedor_asignado` → `usuario.id_usuario`
-- Acción DELETE: **SET NULL**
-- Acción UPDATE: **CASCADE**
-
-### 5. proveedor → compra (1:N)
+### 3. proveedor → compra (1:N)
 - Un proveedor suple múltiples compras
 - FK: `compra.id_proveedor` → `proveedor.id_proveedor`
 - Acción DELETE: **RESTRICT**
 - Acción UPDATE: **CASCADE**
 
-### 6. categoria → producto (1:N)
+### 4. categoria → producto (1:N)
 - Una categoría contiene múltiples productos
 - FK: `producto.id_categoria` → `categoria.id_categoria`
 - Acción DELETE: **RESTRICT** (no eliminar categorías con productos)
 - Acción UPDATE: **CASCADE**
 
-### 7. venta → detalle_venta (1:N)
+### 5. venta → detalle_venta (1:N)
 - Una venta contiene múltiples items
 - FK: `detalle_venta.id_venta` → `venta.id_venta`
 - Acción DELETE: **CASCADE** (eliminar detalles al eliminar venta)
 - Acción UPDATE: **CASCADE**
 
-### 8. producto → detalle_venta (1:N)
+### 6. producto → detalle_venta (1:N)
 - Un producto aparece en múltiples ventas
 - FK: `detalle_venta.id_producto` → `producto.id_producto`
 - Acción DELETE: **RESTRICT**
 - Acción UPDATE: **CASCADE**
 
-### 9. compra → detalle_compra (1:N)
+### 7. compra → detalle_compra (1:N)
 - Una compra contiene múltiples items
 - FK: `detalle_compra.id_compra` → `compra.id_compra`
 - Acción DELETE: **CASCADE**
 - Acción UPDATE: **CASCADE**
 
-### 10. producto → detalle_compra (1:N)
+### 8. producto → detalle_compra (1:N)
 - Un producto aparece en múltiples compras
 - FK: `detalle_compra.id_producto` → `producto.id_producto`
 - Acción DELETE: **RESTRICT**
 - Acción UPDATE: **CASCADE**
 
-### 11. usuario → auditoria (1:N)
+### 9. usuario → auditoria (1:N)
 - Un usuario realiza múltiples registros de auditoría
 - FK: `auditoria.id_usuario` → `usuario.id_usuario`
 - Acción DELETE: **RESTRICT**

@@ -17,11 +17,15 @@ class CategoriaController extends Controller
     /**
      * GET /api/categorias - Listar categorías
      */
-    public function index()
+    public function index(Request $request)
     {
-        $categorias = Categoria::with('productos')
-            ->activas()
-            ->paginate(50);
+        $query = Categoria::query()->orderBy('nombre_categoria');
+
+        if ($request->boolean('con_productos')) {
+            $query->with('productos');
+        }
+
+        $categorias = $query->paginate($request->get('per_page', 50));
 
         return response()->json($categorias);
     }
@@ -73,10 +77,10 @@ class CategoriaController extends Controller
     public function destroy(Categoria $categoria)
     {
         if ($categoria->productos()->count() > 0) {
-            return response()->json(
-                ['error' => 'No se puede eliminar una categoría con productos'],
-                Response::HTTP_FORBIDDEN
-            );
+            return response()->json([
+                'error' => 'No se puede eliminar una categoría con productos asignados',
+                'message' => 'No se puede eliminar una categoría con productos asignados',
+            ], Response::HTTP_FORBIDDEN);
         }
 
         $categoria->delete();
@@ -89,6 +93,7 @@ class CategoriaController extends Controller
     public function productos(Categoria $categoria, Request $request)
     {
         $productos = $categoria->productos()
+            ->with(['categoria', 'marca'])
             ->activos()
             ->paginate($request->get('per_page', 20));
 

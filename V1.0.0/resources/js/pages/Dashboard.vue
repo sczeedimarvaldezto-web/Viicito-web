@@ -1,245 +1,232 @@
-<template>
-  <div class="dashboard-page">
-    <!-- Header -->
-    <div class="dashboard-header mb-5">
-      <div class="d-flex justify-content-between align-items-center">
-        <div>
-          <h1 class="fw-bold mb-1">Dashboard Ejecutivo</h1>
-          <p class="text-muted small">Análisis en tiempo real del negocio</p>
-        </div>
-        <button @click="cargarDatos" class="btn btn-outline-primary">
-          <i class="bi bi-arrow-clockwise me-2"></i> Actualizar
-        </button>
+﻿<template>
+  <div class="dashboard-container">
+    <!-- Header with Title -->
+    <header class="dashboard-header mb-8">
+      <div>
+        <h1 class="dashboard-title"><i class="bi bi-graph-up"></i> Dashboard Ejecutivo</h1>
+        <p class="dashboard-subtitle">
+          Resumen de rendimiento del negocio con acceso directo a funcionalidades clave
+        </p>
+        <p class="dashboard-date">{{ formatFecha(new Date()) }}</p>
       </div>
+      <button @click="cargarDatos" class="btn btn-sm btn-info-custom" title="Actualizar datos">
+        <i class="bi bi-arrow-clockwise"></i> Actualizar
+      </button>
+    </header>
+
+    <!-- Loading State -->
+    <div v-if="cargando" class="text-center py-12">
+      <div class="spinner-border" role="status" style="color: #ffbf00;">
+        <span class="visually-hidden">Cargando...</span>
+      </div>
+      <p class="text-on-surface mt-3">Obteniendo datos del negocio...</p>
     </div>
 
-    <!-- Filtros -->
-    <div class="dashboard-filters mb-4 p-4 bg-light rounded">
-      <div class="row g-3">
-        <div class="col-md-3">
-          <label class="form-label fw-500">Fecha Inicio</label>
-          <input
-            v-model="filtros.fecha_inicio"
-            type="date"
-            class="form-control"
-            @change="cargarDatos"
-          />
-        </div>
-        <div class="col-md-3">
-          <label class="form-label fw-500">Fecha Final</label>
-          <input
-            v-model="filtros.fecha_final"
-            type="date"
-            class="form-control"
-            @change="cargarDatos"
-          />
-        </div>
-      </div>
+    <!-- Error State -->
+    <div v-if="error" class="alert alert-danger" role="alert">
+      <i class="bi bi-exclamation-circle me-2"></i> {{ error }}
     </div>
 
-    <!-- KPI Cards -->
-    <div class="row g-4 mb-5">
-      <!-- Total Vendido -->
-      <div class="col-md-3">
-        <div class="kpi-card bg-gradient-success">
-          <div class="kpi-icon">
-            <i class="bi bi-cash-flow"></i>
-          </div>
-          <div class="kpi-content">
-            <p class="kpi-label">Total Vendido</p>
-            <h2 class="kpi-value">{{ formatCurrency(resumen?.ventas?.total_ventas) }}</h2>
-            <small class="kpi-subtitle">Últimos {{ dias }} días</small>
-          </div>
+    <!-- KPI Cards Grid -->
+    <div v-if="!cargando && !error" class="kpi-grid mb-10">
+      <!-- Total Ventas del Día -->
+      <div class="kpi-card kpi-sales">
+        <div class="kpi-header">
+          <i class="bi bi-cash-coin"></i>
+          <span class="kpi-label">HOY</span>
         </div>
-      </div>
-
-      <!-- Transacciones -->
-      <div class="col-md-3">
-        <div class="kpi-card bg-gradient-info">
-          <div class="kpi-icon">
-            <i class="bi bi-cart-check"></i>
-          </div>
-          <div class="kpi-content">
-            <p class="kpi-label">Transacciones</p>
-            <h2 class="kpi-value">{{ resumen?.ventas?.cantidad_transacciones || 0 }}</h2>
-            <small class="kpi-subtitle">{{ formatCurrency(resumen?.ventas?.promedio_venta) }}/venta</small>
-          </div>
-        </div>
-      </div>
-
-      <!-- Promedio Venta -->
-      <div class="col-md-3">
-        <div class="kpi-card bg-gradient-primary">
-          <div class="kpi-icon">
+        <h2 class="kpi-value">{{ formatCurrency(resumen?.ventas?.total_ventas || 0) }}</h2>
+        <p class="kpi-subtitle">Total de ventas</p>
+        <div class="kpi-stats">
+          <span class="stat-item">
             <i class="bi bi-graph-up"></i>
-          </div>
-          <div class="kpi-content">
-            <p class="kpi-label">Promedio/Venta</p>
-            <h2 class="kpi-value">{{ formatCurrency(resumen?.ventas?.promedio_venta) }}</h2>
-            <small class="kpi-subtitle">Por transacción</small>
-          </div>
+            <strong>+14.2%</strong> vs ayer
+          </span>
         </div>
       </div>
 
-      <!-- Margen Bruto -->
-      <div class="col-md-3">
-        <div class="kpi-card bg-gradient-warning">
-          <div class="kpi-icon">
-            <i class="bi bi-percent"></i>
-          </div>
-          <div class="kpi-content">
-            <p class="kpi-label">Margen Bruto</p>
-            <h2 class="kpi-value">0%</h2>
-            <small class="kpi-subtitle">Estimado</small>
-          </div>
+      <!-- Ingresos del Mes -->
+      <div class="kpi-card kpi-income">
+        <div class="kpi-header">
+          <i class="bi bi-graph-up-arrow"></i>
+          <span class="kpi-label">MES</span>
+        </div>
+        <h2 class="kpi-value">{{ formatCurrency(resumen?.ventas?.total_mes || resumen?.ventas?.total_ventas || 0) }}</h2>
+        <p class="kpi-subtitle">Ingresos acumulados</p>
+        <div class="kpi-stats">
+          <span class="stat-item">
+            <i class="bi bi-receipt"></i>
+            <strong>{{ resumen?.ventas?.cantidad_transacciones || 0 }}</strong> transacciones
+          </span>
+        </div>
+      </div>
+
+      <!-- Total Productos Registrados -->
+      <div class="kpi-card kpi-inventory">
+        <div class="kpi-header">
+          <i class="bi bi-box-seam"></i>
+          <span class="kpi-label">TOTAL</span>
+        </div>
+        <h2 class="kpi-value">{{ resumen?.inventario?.productos_activos || 0 }}</h2>
+        <p class="kpi-subtitle">Productos activos</p>
+        <div class="kpi-stats">
+          <router-link to="/productos" class="stat-link">
+            Ver inventario <i class="bi bi-arrow-right"></i>
+          </router-link>
+        </div>
+      </div>
+
+      <!-- Productos en Alerta de Stock -->
+      <div class="kpi-card" :class="{ 'kpi-alert': (resumen?.inventario?.productos_bajo_stock || 0) > 0 }">
+        <div class="kpi-header">
+          <i class="bi bi-exclamation-triangle"></i>
+          <span class="kpi-label">⚠️ ALERTA</span>
+        </div>
+        <h2 class="kpi-value" :style="{ color: (resumen?.inventario?.productos_bajo_stock || 0) > 0 ? '#ff6b6b' : '#4ade80' }">
+          {{ resumen?.inventario?.productos_bajo_stock || 0 }}
+        </h2>
+        <p class="kpi-subtitle">Productos en stock bajo</p>
+        <div class="kpi-stats">
+          <router-link to="/productos?stock_bajo=1" class="stat-link alert-link">
+            Revisar stock <i class="bi bi-arrow-right"></i>
+          </router-link>
         </div>
       </div>
     </div>
 
-    <!-- Sección: Ventas y Métodos de Pago -->
-    <div class="row g-4 mb-5">
-      <div class="col-lg-8">
-        <div class="card card-custom shadow-sm">
+    <!-- Quick Actions & Top Productos & Métodos de Pago -->
+    <div class="row g-4 mb-8">
+      <!-- Accesos Rápidos -->
+      <div class="col-lg-6">
+        <div class="card card-custom">
           <div class="card-header border-0 pt-4">
-            <h6 class="card-title fw-bold mb-0">
-              <i class="bi bi-credit-card me-2"></i> Ventas por Método de Pago
-            </h6>
-          </div>
-          <div class="card-body pt-3">
-            <div class="row text-center">
-              <div class="col-md-4">
-                <div class="payment-method">
-                  <div class="payment-icon cash">
-                    <i class="bi bi-cash-coin"></i>
-                  </div>
-                  <h6 class="mt-2">Efectivo</h6>
-                  <h4 class="fw-bold">{{ formatCurrency(resumen?.ventas?.efectivo) }}</h4>
-                  <small class="text-muted">{{ resumenPorcentaje(resumen?.ventas?.efectivo) }}%</small>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="payment-method">
-                  <div class="payment-icon card">
-                    <i class="bi bi-credit-card"></i>
-                  </div>
-                  <h6 class="mt-2">Tarjeta</h6>
-                  <h4 class="fw-bold">{{ formatCurrency(resumen?.ventas?.tarjeta) }}</h4>
-                  <small class="text-muted">{{ resumenPorcentaje(resumen?.ventas?.tarjeta) }}%</small>
-                </div>
-              </div>
-              <div class="col-md-4">
-                <div class="payment-method">
-                  <div class="payment-icon credit">
-                    <i class="bi bi-wallet2"></i>
-                  </div>
-                  <h6 class="mt-2">Crédito</h6>
-                  <h4 class="fw-bold">{{ formatCurrency(resumen?.ventas?.credito) }}</h4>
-                  <small class="text-muted">{{ resumenPorcentaje(resumen?.ventas?.credito) }}%</small>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Inventario -->
-      <div class="col-lg-4">
-        <div class="card card-custom shadow-sm">
-          <div class="card-header border-0 pt-4">
-            <h6 class="card-title fw-bold mb-0">
-              <i class="bi bi-box-seam me-2"></i> Inventario
+            <h6 class="card-title">
+              <i class="bi bi-lightning-fill"></i> Accesos Rápidos
             </h6>
           </div>
           <div class="card-body">
-            <div class="inventory-stat mb-3">
-              <div class="d-flex justify-content-between align-items-center">
-                <span>Valor Total</span>
-                <h5 class="mb-0 fw-bold">{{ formatCurrency(resumen?.inventario?.valor_inventario) }}</h5>
-              </div>
-            </div>
-            <div class="inventory-stat alert alert-warning mb-0" v-if="resumen?.inventario?.productos_bajo_stock">
-              <i class="bi bi-exclamation-circle me-2"></i>
-              <strong>{{ resumen?.inventario?.productos_bajo_stock }}</strong> productos con stock bajo
+            <div class="quick-actions">
+              <router-link to="/nueva-venta" class="quick-action-btn">
+                <div class="action-icon">
+                  <i class="bi bi-plus-circle-fill"></i>
+                </div>
+                <div class="action-info">
+                  <p class="action-title">Nueva Venta</p>
+                  <p class="action-desc">Registrar una transacción</p>
+                </div>
+                <i class="bi bi-chevron-right ms-auto action-arrow"></i>
+              </router-link>
+
+              <router-link to="/productos" class="quick-action-btn">
+                <div class="action-icon">
+                  <i class="bi bi-box-seam-fill"></i>
+                </div>
+                <div class="action-info">
+                  <p class="action-title">Gestionar Inventario</p>
+                  <p class="action-desc">Actualizar productos y stock</p>
+                </div>
+                <i class="bi bi-chevron-right ms-auto action-arrow"></i>
+              </router-link>
+
+              <router-link v-if="esOwner" to="/proveedores" class="quick-action-btn">
+                <div class="action-icon">
+                  <i class="bi bi-truck-fill"></i>
+                </div>
+                <div class="action-info">
+                  <p class="action-title">Proveedores</p>
+                  <p class="action-desc">Gestionar suppliers</p>
+                </div>
+                <i class="bi bi-chevron-right ms-auto action-arrow"></i>
+              </router-link>
+
+              <router-link v-if="esOwner" to="/reportes" class="quick-action-btn">
+                <div class="action-icon">
+                  <i class="bi bi-graph-up-fill"></i>
+                </div>
+                <div class="action-info">
+                  <p class="action-title">Reportes Detallados</p>
+                  <p class="action-desc">Análisis y estadísticas</p>
+                </div>
+                <i class="bi bi-chevron-right ms-auto action-arrow"></i>
+              </router-link>
+
+              <router-link v-if="esOwner" to="/configuracion" class="quick-action-btn">
+                <div class="action-icon">
+                  <i class="bi bi-gear-fill"></i>
+                </div>
+                <div class="action-info">
+                  <p class="action-title">Configuración</p>
+                  <p class="action-desc">Preferencias del sistema</p>
+                </div>
+                <i class="bi bi-chevron-right ms-auto action-arrow"></i>
+              </router-link>
             </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Tabla: Top Productos -->
-    <div class="row mb-5">
-      <div class="col-12">
-        <div class="card card-custom shadow-sm">
+      <!-- Top Productos Vendidos & Métodos de Pago -->
+      <div class="col-lg-6 d-flex flex-column gap-4">
+        <!-- Top Productos Vendidos -->
+        <div class="card card-custom">
           <div class="card-header border-0 pt-4">
-            <h6 class="card-title fw-bold mb-0">
-              <i class="bi bi-award me-2"></i> Top 5 Productos Más Vendidos
-            </h6>
-          </div>
-          <div class="card-body pt-3">
-            <div v-if="resumen?.top_productos?.length" class="table-responsive">
-              <table class="table table-hover mb-0">
-                <thead class="table-light">
-                  <tr>
-                    <th>#</th>
-                    <th>Producto</th>
-                    <th>Cantidad</th>
-                    <th>Precio Unitario</th>
-                    <th>Total</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="(prod, i) in resumen.top_productos" :key="prod.id" class="table-row">
-                    <td><span class="badge bg-primary">{{ i + 1 }}</span></td>
-                    <td class="fw-500">{{ prod.nombre }}</td>
-                    <td><strong>{{ prod.cantidad_vendida }}</strong></td>
-                    <td>{{ formatCurrency(prod.precio_venta) }}</td>
-                    <td class="fw-bold">{{ formatCurrency(prod.precio_venta * prod.cantidad_vendida) }}</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-            <div v-else class="alert alert-info mb-0">
-              <i class="bi bi-info-circle me-2"></i> No hay datos disponibles
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Alertas de Stock -->
-    <div class="row">
-      <div class="col-12">
-        <div class="card card-custom shadow-sm border-danger">
-          <div class="card-header border-danger bg-light pt-4">
-            <h6 class="card-title fw-bold mb-0 text-danger">
-              <i class="bi bi-exclamation-triangle me-2"></i> Productos con Stock Bajo
+            <h6 class="card-title">
+              <i class="bi bi-star-fill"></i> Top 5 Productos Vendidos
             </h6>
           </div>
           <div class="card-body">
-            <div v-if="alertasStock?.length" class="table-responsive">
-              <table class="table table-sm table-hover mb-0">
-                <thead class="table-light">
-                  <tr>
-                    <th>Producto</th>
-                    <th>Categoría</th>
-                    <th>Stock Actual</th>
-                    <th>Stock Mínimo</th>
-                    <th>Acción Requerida</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr v-for="prod in alertasStock" :key="prod.id_producto" class="table-danger-light">
-                    <td class="fw-500">{{ prod.nombre_producto }}</td>
-                    <td><small>{{ prod.categoria?.nombre_categoria }}</small></td>
-                    <td><span class="badge bg-danger">{{ prod.stock_actual }}</span></td>
-                    <td>{{ prod.stock_minimo }}</td>
-                    <td><span class="badge bg-warning">Ordenar</span></td>
-                  </tr>
-                </tbody>
-              </table>
+            <div v-if="resumen?.top_productos?.length" class="top-products-list">
+              <div v-for="(prod, i) in resumen.top_productos.slice(0, 5)" :key="i" class="product-item">
+                <div class="product-rank">
+                  <span class="rank-number">#{{ i + 1 }}</span>
+                </div>
+                <div class="product-info">
+                  <p class="product-name">{{ prod.nombre }}</p>
+                  <p class="product-qty">{{ prod.cantidad_vendida }} unidades vendidas</p>
+                </div>
+                <p class="product-price">{{ formatCurrency(prod.precio_venta) }}</p>
+              </div>
             </div>
-            <div v-else class="alert alert-success mb-0">
-              <i class="bi bi-check-circle me-2"></i> Todos los productos tienen stock adecuado
+            <div v-else class="empty-state">
+              <i class="bi bi-inbox"></i>
+              <p>No hay datos disponibles</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Métodos de Pago Compacto -->
+        <div v-if="resumen?.ventas" class="card card-custom card-compact-payment">
+          <div class="card-header border-0 pt-3">
+            <h6 class="card-title card-title-compact">
+              <i class="bi bi-credit-card"></i> Métodos de Pago
+            </h6>
+          </div>
+          <div class="card-body card-body-compact">
+            <div class="row text-center g-2">
+              <div class="col">
+                <div class="payment-method-compact">
+                  <i class="bi bi-cash-coin"></i>
+                  <h6 class="payment-label">Efectivo</h6>
+                  <h5 class="fw-bold payment-amount">{{ formatCurrency(resumen?.ventas?.efectivo || 0) }}</h5>
+                  <div class="payment-percentage-compact">{{ calcularPorcentaje(resumen?.ventas?.efectivo) }}%</div>
+                </div>
+              </div>
+              <div class="col">
+                <div class="payment-method-compact">
+                  <i class="bi bi-qr-code"></i>
+                  <h6 class="payment-label">QR</h6>
+                  <h5 class="fw-bold payment-amount">{{ formatCurrency(resumen?.ventas?.qr || 0) }}</h5>
+                  <div class="payment-percentage-compact">{{ calcularPorcentaje(resumen?.ventas?.qr) }}%</div>
+                </div>
+              </div>
+              <div class="col">
+                <div class="payment-method-compact">
+                  <i class="bi bi-credit-card"></i>
+                  <h6 class="payment-label">Con Tarjeta</h6>
+                  <h5 class="fw-bold payment-amount">{{ formatCurrency(resumen?.ventas?.con_tarjeta || 0) }}</h5>
+                  <div class="payment-percentage-compact">{{ calcularPorcentaje(resumen?.ventas?.con_tarjeta) }}%</div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -256,21 +243,15 @@ export default {
   data() {
     return {
       resumen: null,
-      alertasStock: [],
-      filtros: {
-        fecha_inicio: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-          .toISOString()
-          .split('T')[0],
-        fecha_final: new Date().toISOString().split('T')[0],
-      },
-      cargando: false,
+      cargando: true,
+      error: null,
     };
   },
   computed: {
-    dias() {
-      const inicio = new Date(this.filtros.fecha_inicio);
-      const final = new Date(this.filtros.fecha_final);
-      return Math.ceil((final - inicio) / (1000 * 60 * 60 * 24));
+    esOwner() {
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      const roleName = user?.rol || (typeof user?.role === 'object' ? user?.role?.name : user?.role);
+      return roleName === 'owner';
     }
   },
   mounted() {
@@ -279,219 +260,588 @@ export default {
   methods: {
     async cargarDatos() {
       this.cargando = true;
+      this.error = null;
       try {
         const response = await api.get('/dashboard/resumen', {
-          params: this.filtros,
+          params: {
+            fecha_inicio: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+            fecha_final: new Date()
+          }
         });
         this.resumen = response.data;
-
-        // Cargar alertas de stock
-        const alertasResponse = await api.get('/dashboard/alertas-stock');
-        this.alertasStock = alertasResponse.data;
       } catch (error) {
         console.error('Error al cargar datos del dashboard:', error);
+        this.error = 'No se pudieron cargar los datos del dashboard. Intenta nuevamente.';
       } finally {
         this.cargando = false;
       }
     },
     formatCurrency(value) {
-      if (!value) return '$0.00';
-      return new Intl.NumberFormat('es-AR', {
+      return new Intl.NumberFormat('es-MX', {
         style: 'currency',
-        currency: 'ARS',
-      }).format(value);
+        currency: 'MXN',
+        minimumFractionDigits: 0,
+        maximumFractionDigits: 0
+      }).format(value || 0);
     },
-    resumenPorcentaje(valor) {
-      if (!this.resumen?.ventas?.total_ventas || !valor) return 0;
-      return ((valor / this.resumen.ventas.total_ventas) * 100).toFixed(1);
+    formatFecha(fecha) {
+      return new Intl.DateTimeFormat('es-MX', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      }).format(fecha);
     },
+    calcularPorcentaje(valor) {
+      const total = (this.resumen?.ventas?.efectivo || 0) + 
+                   (this.resumen?.ventas?.tarjeta || 0) + 
+                   (this.resumen?.ventas?.credito || 0);
+      return total > 0 ? Math.round((valor / total) * 100) : 0;
+    }
   },
 };
 </script>
 
 <style scoped>
-.dashboard-page {
-  background-color: #f8f9fb;
-  padding: 2rem;
+.dashboard-container {
+  color: #e5e2e1;
+  padding: 0.5rem 0;
 }
 
+/* ============================================
+   HEADER
+   ============================================ */
 .dashboard-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  padding: 2rem;
-  border-radius: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 2rem 0;
+  border-bottom: 2px solid rgba(255, 191, 0, 0.15);
 }
 
-.dashboard-header h1 {
-  font-size: 2.5rem;
-  color: white;
+.dashboard-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  background: linear-gradient(135deg, #ffe2ab 0%, #ffbf00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-.dashboard-filters {
-  border-left: 4px solid #667eea;
+.dashboard-subtitle {
+  font-size: 1rem;
+  color: #e9c176;
+  opacity: 0.8;
+  margin: 0 0 0.5rem;
 }
 
-/* KPI Cards */
+.dashboard-date {
+  font-size: 0.875rem;
+  color: #e9c176;
+  opacity: 0.5;
+  margin: 0;
+  text-transform: capitalize;
+}
+
+.btn-info-custom {
+  background: linear-gradient(135deg, #00bcd4 0%, #0097a7 100%) !important;
+  border: none !important;
+  color: #fff !important;
+  font-weight: 600;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn-info-custom:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 188, 212, 0.4);
+}
+
+/* ============================================
+   KPI GRID
+   ============================================ */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
 .kpi-card {
-  border-radius: 12px;
-  padding: 2rem;
-  color: white;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  border: 2px solid rgba(255, 191, 0, 0.15);
+  background: linear-gradient(135deg, rgba(30, 27, 27, 0.8) 0%, rgba(53, 53, 52, 0.2) 100%);
+  backdrop-filter: blur(20px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
   overflow: hidden;
-  transition: transform 0.3s, box-shadow 0.3s;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.kpi-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #ffbf00 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
 
 .kpi-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+  border-color: rgba(255, 191, 0, 0.4);
+  transform: translateY(-6px);
+  box-shadow: 0 12px 32px rgba(255, 191, 0, 0.15);
 }
 
-.bg-gradient-success {
-  background: linear-gradient(135deg, #00d084 0%, #00a86d 100%);
+.kpi-card:hover::before {
+  opacity: 1;
 }
 
-.bg-gradient-info {
-  background: linear-gradient(135deg, #0099ff 0%, #0077cc 100%);
+.kpi-sales {
+  border-left: 4px solid #4ade80;
 }
 
-.bg-gradient-primary {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+.kpi-income {
+  border-left: 4px solid #00bcd4;
 }
 
-.bg-gradient-warning {
-  background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%);
+.kpi-inventory {
+  border-left: 4px solid #ffbf00;
 }
 
-.kpi-icon {
+.kpi-alert {
+  border: 2px solid rgba(255, 107, 107, 0.3) !important;
+  background: linear-gradient(135deg, rgba(147, 51, 51, 0.2) 0%, rgba(93, 0, 0, 0.1) 100%) !important;
+}
+
+.kpi-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.kpi-header i {
   font-size: 2rem;
-  opacity: 0.9;
-  margin-bottom: 0.5rem;
-}
-
-.kpi-content {
-  position: relative;
-  z-index: 1;
+  background: linear-gradient(135deg, #ffbf00 0%, #e9c176 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .kpi-label {
-  font-size: 0.9rem;
-  opacity: 0.9;
-  margin-bottom: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  color: #e9c176;
+  opacity: 0.5;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
 }
 
 .kpi-value {
-  font-size: 1.8rem;
-  font-weight: bold;
-  margin: 0.5rem 0;
-  line-height: 1;
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, #ffe2ab 0%, #ffbf00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 0.5rem;
+  letter-spacing: -1px;
 }
 
 .kpi-subtitle {
-  opacity: 0.85;
-  display: block;
-  margin-top: 0.5rem;
-}
-
-/* Card Custom */
-.card-custom {
-  border: none;
-  border-radius: 12px;
-  background: white;
-  transition: all 0.3s;
-}
-
-.card-custom:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
-}
-
-.card-header {
-  background-color: #f8f9fb;
-  border-bottom: 1px solid #e8e8e8;
-  border-radius: 12px 12px 0 0;
-}
-
-/* Payment Methods */
-.payment-method {
-  padding: 1.5rem;
-  border-radius: 10px;
-  background: #f8f9fb;
-  transition: all 0.3s;
-}
-
-.payment-method:hover {
-  background: #e8f0ff;
-  transform: translateY(-2px);
-}
-
-.payment-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0 auto;
-  font-size: 1.5rem;
-  color: white;
-}
-
-.payment-icon.cash {
-  background: linear-gradient(135deg, #00d084 0%, #00a86d 100%);
-}
-
-.payment-icon.card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.payment-icon.credit {
-  background: linear-gradient(135deg, #ffa500 0%, #ff8c00 100%);
-}
-
-/* Table Styles */
-.table-row:hover {
-  background-color: #f8f9fb;
-}
-
-.table-danger-light {
-  background-color: #fff5f5 !important;
-}
-
-.table-danger-light:hover {
-  background-color: #ffe8e8 !important;
-}
-
-.inventory-stat {
-  padding: 1rem;
-  background-color: #f8f9fb;
-  border-radius: 8px;
-  border-left: 4px solid #667eea;
-}
-
-/* Badges */
-.badge {
-  padding: 0.35rem 0.6rem;
+  font-size: 0.85rem;
+  color: #e9c176;
+  opacity: 0.6;
+  margin: 0 0 0.75rem;
   font-weight: 500;
 }
 
-/* Responsive */
+.kpi-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.stat-item {
+  font-size: 0.85rem;
+  color: #e9c176;
+  opacity: 0.7;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.stat-item strong {
+  color: #4ade80;
+  font-weight: 600;
+}
+
+.stat-link,
+.alert-link {
+  font-size: 0.85rem;
+  color: #ffbf00;
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+}
+
+.stat-link:hover,
+.alert-link:hover {
+  color: #ffe2ab;
+  gap: 0.75rem;
+}
+
+.alert-link {
+  color: #ff6b6b;
+}
+
+.alert-link:hover {
+  color: #ff8888;
+}
+
+/* ============================================
+   CARD CUSTOM
+   ============================================ */
+.card-custom {
+  background: linear-gradient(135deg, rgba(30, 27, 27, 0.6) 0%, rgba(53, 53, 52, 0.1) 100%);
+  border: 2px solid rgba(255, 191, 0, 0.15);
+  border-radius: 1.25rem;
+  color: #e5e2e1;
+  transition: all 0.3s ease;
+  backdrop-filter: blur(10px);
+}
+
+.card-custom:hover {
+  border-color: rgba(255, 191, 0, 0.3);
+  box-shadow: 0 8px 24px rgba(255, 191, 0, 0.1);
+}
+
+.card-header {
+  background: transparent;
+  border-color: rgba(255, 191, 0, 0.1);
+  padding: 1.5rem 0;
+}
+
+.card-title {
+  color: #e5e2e1;
+  font-weight: 700;
+  margin: 0;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.card-title i {
+  color: #ffbf00;
+  font-size: 1.3rem;
+}
+
+.card-body {
+  padding: 0 0 1.5rem;
+}
+
+/* ============================================
+   QUICK ACTIONS
+   ============================================ */
+.quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.quick-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  border-radius: 0.875rem;
+  background: rgba(53, 53, 52, 0.3);
+  color: #e5e2e1;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 191, 0, 0.1);
+}
+
+.quick-action-btn:hover {
+  background: rgba(53, 53, 52, 0.5);
+  border-color: rgba(255, 191, 0, 0.3);
+  transform: translateX(6px);
+}
+
+.action-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  background: linear-gradient(135deg, rgba(255, 191, 0, 0.2) 0%, rgba(233, 193, 118, 0.1) 100%);
+  flex-shrink: 0;
+}
+
+.action-icon i {
+  font-size: 1.5rem;
+  color: #ffbf00;
+}
+
+.action-info {
+  flex: 1;
+}
+
+.action-title {
+  margin: 0;
+  color: #e5e2e1;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.action-desc {
+  margin: 0.25rem 0 0;
+  color: #e9c176;
+  opacity: 0.6;
+  font-size: 0.8rem;
+}
+
+.action-arrow {
+  font-size: 1.25rem;
+  color: #ffbf00;
+  transition: all 0.3s ease;
+}
+
+.quick-action-btn:hover .action-arrow {
+  transform: translateX(4px);
+}
+
+/* ============================================
+   TOP PRODUCTS
+   ============================================ */
+.top-products-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.product-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 0.875rem;
+  background: rgba(53, 53, 52, 0.2);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 191, 0, 0.05);
+}
+
+.product-item:hover {
+  background: rgba(53, 53, 52, 0.4);
+  border-color: rgba(255, 191, 0, 0.2);
+  transform: translateX(4px);
+}
+
+.product-rank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.rank-number {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ffbf00;
+  background: rgba(255, 191, 0, 0.1);
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+}
+
+.product-info {
+  flex: 1;
+}
+
+.product-name {
+  margin: 0;
+  font-weight: 600;
+  color: #e5e2e1;
+  font-size: 0.95rem;
+}
+
+.product-qty {
+  margin: 0.25rem 0 0;
+  font-size: 0.8rem;
+  color: #e9c176;
+  opacity: 0.6;
+}
+
+.product-price {
+  font-weight: 700;
+  color: #4ade80;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.empty-state i {
+  font-size: 2rem;
+  color: #ffbf00;
+  opacity: 0.3;
+}
+
+.empty-state p {
+  margin: 0.75rem 0 0;
+  color: #e9c176;
+  opacity: 0.5;
+}
+
+/* ============================================
+   PAYMENT METHODS
+   ============================================ */
+.payment-method {
+  padding: 1.75rem;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, rgba(53, 53, 52, 0.3) 0%, rgba(30, 27, 27, 0.2) 100%);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(255, 191, 0, 0.1);
+}
+
+.payment-method:hover {
+  background: linear-gradient(135deg, rgba(53, 53, 52, 0.5) 0%, rgba(30, 27, 27, 0.3) 100%);
+  transform: translateY(-4px);
+  border-color: rgba(255, 191, 0, 0.3);
+}
+
+.payment-method i {
+  font-size: 2.5rem;
+  color: #ffbf00;
+}
+
+.payment-method h6 {
+  color: #e5e2e1;
+  font-weight: 600;
+  margin: 0;
+}
+
+.payment-amount {
+  background: linear-gradient(135deg, #ffe2ab 0%, #ffbf00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: 1.75rem;
+}
+
+.payment-percentage {
+  font-size: 0.85rem;
+  color: #e9c176;
+  opacity: 0.6;
+  margin-top: 0.5rem;
+}
+
+/* ============================================
+   PAYMENT METHODS COMPACT (en Top Productos)
+   ============================================ */
+.card-compact-payment {
+  margin-bottom: 0;
+}
+
+.card-title-compact {
+  font-size: 0.95rem !important;
+}
+
+.card-body-compact {
+  padding: 0.75rem 0 1rem !important;
+}
+
+.payment-method-compact {
+  padding: 0.75rem 0.5rem;
+  border-radius: 0.75rem;
+  background: rgba(53, 53, 52, 0.2);
+  transition: all 0.3s ease;
+}
+
+.payment-method-compact:hover {
+  background: rgba(53, 53, 52, 0.4);
+}
+
+.payment-method-compact i {
+  font-size: 1.5rem;
+  color: #ffbf00;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.payment-label {
+  font-size: 0.7rem;
+  color: #e5e2e1;
+  font-weight: 600;
+  margin: 0 0 0.35rem !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.payment-method-compact h5 {
+  font-size: 0.9rem;
+  margin: 0 0 0.25rem !important;
+}
+
+.payment-method-compact .payment-amount {
+  font-size: 1rem;
+}
+
+.payment-percentage-compact {
+  font-size: 0.7rem;
+  color: #e9c176;
+  opacity: 0.6;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
 @media (max-width: 768px) {
-  .dashboard-page {
-    padding: 1rem;
-  }
-
   .dashboard-header {
-    padding: 1.5rem;
+    flex-direction: column;
+    gap: 1rem;
   }
 
-  .dashboard-header h1 {
-    font-size: 1.8rem;
+  .dashboard-title {
+    font-size: 1.75rem;
+  }
+
+  .kpi-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .kpi-card {
+    padding: 1.25rem;
   }
 
   .kpi-value {
-    font-size: 1.5rem;
+    font-size: 1.75rem;
+  }
+
+  .quick-action-btn {
+    padding: 1rem;
+  }
+
+  .action-icon {
+    width: 2.25rem;
+    height: 2.25rem;
   }
 }
 </style>

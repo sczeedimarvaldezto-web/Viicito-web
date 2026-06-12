@@ -8,13 +8,16 @@ import Ventas from '@/pages/Ventas.vue';
 import NuevaVenta from '@/pages/NuevaVenta.vue';
 import Compras from '@/pages/Compras.vue';
 import NuevaCompra from '@/pages/NuevaCompra.vue';
-import Clientes from '@/pages/Clientes.vue';
 import Categorias from '@/pages/Categorias.vue';
+import Marcas from '@/pages/Marcas.vue';
 import Reportes from '@/pages/Reportes.vue';
 import Empleados from '@/pages/Empleados.vue';
+import NuevoProducto from '@/pages/NuevoProducto.vue';
 import OwnerPanel from '@/pages/OwnerPanel.vue';
 import Login from '@/pages/Login.vue';
 import Register from '@/pages/Register.vue';
+import Proveedores from '@/pages/Proveedores.vue';
+import Configuracion from '@/pages/Configuracion.vue';
 
 const routes = [
   {
@@ -35,12 +38,17 @@ const routes = [
   {
     path: '/',
     component: Dashboard,
-    meta: { title: 'Dashboard - Viicito' }
+    meta: { title: 'Dashboard - Viicito', requiredRole: 'owner' }
   },
   {
     path: '/productos',
     component: Productos,
     meta: { title: 'Productos - Viicito' }
+  },
+  {
+    path: '/productos/nuevo',
+    component: NuevoProducto,
+    meta: { title: 'Nuevo Producto - Viicito' }
   },
   {
     path: '/ventas',
@@ -73,14 +81,24 @@ const routes = [
     meta: { title: 'Detalle Compra - Viicito' }
   },
   {
-    path: '/clientes',
-    component: Clientes,
-    meta: { title: 'Clientes - Viicito' }
-  },
-  {
     path: '/categorias',
     component: Categorias,
     meta: { title: 'Categorías - Viicito' }
+  },
+  {
+    path: '/marcas',
+    component: Marcas,
+    meta: { title: 'Marcas - Viicito' }
+  },
+  {
+    path: '/configuracion',
+    component: Configuracion,
+    meta: { title: 'Configuración - Viicito' }
+  },
+  {
+    path: '/proveedores',
+    component: Proveedores,
+    meta: { title: 'Proveedores - Viicito' }
   },
   {
     path: '/reportes',
@@ -104,52 +122,57 @@ router.beforeEach((to, from, next) => {
   const userData = localStorage.getItem('user');
   const usuario = userData ? JSON.parse(userData) : null;
   const isAuthenticated = !!usuario;
-  const role = usuario?.role?.name;
+  
+  // Extraer rol correctamente - el backend envía 'rol' no 'role'
+  let role = usuario?.rol || (typeof usuario?.role === 'object' ? usuario?.role?.name : usuario?.role);
 
-  if (to.path === '/login') {
+
+  // Si el usuario intenta acceder a login/register pero ya está autenticado
+  if (to.path === '/login' || to.path === '/register') {
     if (isAuthenticated) {
-      next(role === 'owner' ? '/owner-panel' : '/ventas');
+      // Redirigir al dashboard (/)
+      next('/');
     } else {
       next();
     }
     return;
   }
 
-  if (to.path === '/register') {
-    if (isAuthenticated && role !== 'owner') {
-      next('/ventas');
-    } else {
-      next();
-    }
-    return;
-  }
-
+  // Rutas protegidas - requieren autenticación
   if (!isAuthenticated) {
+    console.warn('❌ Acceso denegado: Usuario no autenticado. Redirigiendo a login...');
     next('/login');
     return;
   }
 
+  // Si el usuario NO es owner, limitar acceso a ciertas rutas
   if (role !== 'owner') {
     const forbiddenForEmployees = [
       '/owner-panel',
       '/reportes',
-      '/clientes',
       '/categorias',
+      '/marcas',
+      '/configuracion',
+      '/proveedores',
       '/compras',
       '/empleados',
     ];
 
     if (forbiddenForEmployees.some((path) => to.path === path || to.path.startsWith(`${path}/`))) {
-      next('/ventas');
+      console.warn('❌ Acceso denegado: Rol insuficiente. Redirigiendo a ventas...');
+      next('/nueva-venta');
       return;
     }
 
+    // Los empleados no pueden acceder al dashboard principal (/)
     if (to.path === '/') {
-      next('/ventas');
+      console.info('👤 Empleado intentando acceder al dashboard. Redirigiendo a nuevaVenta...');
+      next('/nueva-venta');
       return;
     }
   }
 
+  // Si es owner o ruta permitida, proceder
   next();
 });
 

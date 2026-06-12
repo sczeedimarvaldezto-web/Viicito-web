@@ -29,7 +29,6 @@ return new class extends Migration
         Schema::dropIfExists('compra');
         Schema::dropIfExists('producto');
         Schema::dropIfExists('proveedor');
-        Schema::dropIfExists('cliente');
         Schema::dropIfExists('usuario');
         Schema::dropIfExists('categoria');
     }
@@ -47,17 +46,6 @@ return new class extends Migration
             Schema::create('categoria', function (Blueprint $table) {
                 $table->integer('id_categoria')->primary()->autoIncrement();
                 $table->string('nombre_categoria', 50);
-                $table->timestamps();
-            });
-        }
-
-        // Cliente table
-        if (!Schema::hasTable('cliente')) {
-            Schema::create('cliente', function (Blueprint $table) {
-                $table->integer('id_cliente')->primary()->autoIncrement();
-                $table->string('nombre_razon_social', 100);
-                $table->string('nit_ci', 30)->nullable();
-                $table->string('telefono', 20)->nullable();
                 $table->timestamps();
             });
         }
@@ -158,7 +146,6 @@ return new class extends Migration
             Schema::create('venta', function (Blueprint $table) {
                 $table->integer('id_venta')->primary()->autoIncrement();
                 $table->integer('id_usuario')->nullable();
-                $table->integer('id_cliente')->nullable();
                 $table->dateTime('fecha_hora')->useCurrent();
                 $table->decimal('total_venta', 10, 2);
                 $table->string('metodo_pago', 20)->nullable();
@@ -169,10 +156,6 @@ return new class extends Migration
                 $table->foreign('id_usuario')
                     ->references('id_usuario')
                     ->on('usuario')
-                    ->onDelete('restrict');
-                $table->foreign('id_cliente')
-                    ->references('id_cliente')
-                    ->on('cliente')
                     ->onDelete('restrict');
             });
         }

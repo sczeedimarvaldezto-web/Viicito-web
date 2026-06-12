@@ -51,11 +51,6 @@ class Usuario extends Authenticatable
         return $this->hasMany(Compra::class, 'id_usuario', 'id_usuario');
     }
 
-    public function clientes()
-    {
-        return $this->hasMany(Cliente::class, 'vendedor_asignado', 'id_usuario');
-    }
-
     public function auditorias()
     {
         return $this->hasMany(Auditoria::class, 'id_usuario', 'id_usuario');

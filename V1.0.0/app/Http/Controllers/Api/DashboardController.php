@@ -42,8 +42,8 @@ class DashboardController extends Controller
 
         // Ventas por método de pago
         $ventas_efectivo = $ventas->where('metodo_pago', 'Efectivo')->sum('total_venta');
-        $ventas_tarjeta = $ventas->where('metodo_pago', 'Tarjeta')->sum('total_venta');
-        $ventas_credito = $ventas->where('metodo_pago', 'Crédito')->sum('total_venta');
+        $ventas_qr = $ventas->where('metodo_pago', 'QR')->sum('total_venta');
+        $ventas_con_tarjeta = $ventas->where('metodo_pago', 'Con Tarjeta')->sum('total_venta');
 
         // Top productos vendidos
         $top_productos = Producto::with('detallesVenta')
@@ -66,8 +66,8 @@ class DashboardController extends Controller
                 'total_ventas' => round($total_ventas, 2),
                 'promedio_venta' => round($promedio_venta, 2),
                 'efectivo' => round($ventas_efectivo, 2),
-                'tarjeta' => round($ventas_tarjeta, 2),
-                'credito' => round($ventas_credito, 2),
+                'qr' => round($ventas_qr, 2),
+                'con_tarjeta' => round($ventas_con_tarjeta, 2),
             ],
             'inventario' => [
                 'productos_activos' => $productos_total,
@@ -133,6 +133,8 @@ class DashboardController extends Controller
      */
     public function alertasStock()
     {
+        $total = Producto::stockBajo()->count();
+
         $productos = Producto::stockBajo()
             ->with('categoria')
             ->selectRaw('*, (stock_minimo - stock_actual) as faltante')
@@ -141,7 +143,7 @@ class DashboardController extends Controller
             ->get();
 
         return response()->json([
-            'total_alertas' => $productos->count(),
+            'total_alertas' => $total,
             'productos' => $productos,
         ]);
     }

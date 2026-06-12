@@ -14,7 +14,7 @@
           v-model="busqueda"
           @input="filtrarCategorias"
           type="text"
-          class="form-control"
+          class="form-control dark-form-control"
           placeholder="Buscar categorías..."
         />
       </div>
@@ -29,7 +29,7 @@
     <div class="row mb-3">
       <div class="col-md-4">
         <div class="card bg-primary text-white">
-          <div class="card-body">
+          <div class="card-body dark-card-body">
             <h6>Total Categorías</h6>
             <h3>{{ categorias.length }}</h3>
           </div>
@@ -37,7 +37,7 @@
       </div>
       <div class="col-md-4">
         <div class="card bg-info text-white">
-          <div class="card-body">
+          <div class="card-body dark-card-body">
             <h6>Productos</h6>
             <h3>{{ totalProductos }}</h3>
           </div>
@@ -45,7 +45,7 @@
       </div>
       <div class="col-md-4">
         <div class="card bg-success text-white">
-          <div class="card-body">
+          <div class="card-body dark-card-body">
             <h6>Stock Total</h6>
             <h3>{{ totalStock }}</h3>
           </div>
@@ -57,7 +57,7 @@
     <div class="row">
       <div v-for="categoria in categoriasFiltradas" :key="categoria.id_categoria" class="col-md-6 col-lg-4 mb-3">
         <div class="card h-100">
-          <div class="card-body">
+          <div class="card-body dark-card-body">
             <h5 class="card-title">{{ categoria.nombre_categoria }}</h5>
             <p class="card-text text-muted">{{ categoria.descripcion }}</p>
             
@@ -106,7 +106,7 @@
               <input
                 v-model="formulario.nombre_categoria"
                 type="text"
-                class="form-control"
+                class="form-control dark-form-control"
                 placeholder="Ej: Ron, Vodka, Cerveza..."
               />
             </div>
@@ -115,7 +115,7 @@
               <label class="form-label">Descripción</label>
               <textarea
                 v-model="formulario.descripcion"
-                class="form-control"
+                class="form-control dark-form-control"
                 rows="3"
                 placeholder="Descripción de la categoría..."
               ></textarea>
@@ -185,7 +185,7 @@ export default {
   methods: {
     async cargarCategorias() {
       try {
-        const response = await api.get('/categorias');
+        const response = await api.get('/categorias', { params: { con_productos: 1 } });
         this.categorias = response.data.data || response.data;
       } catch (error) {
         console.error('Error cargando categorías:', error);
@@ -235,7 +235,8 @@ export default {
           await api.delete(`/categorias/${id}`);
           this.cargarCategorias();
         } catch (error) {
-          alert('Error: ' + (error.response?.data?.message || error.message));
+          const msg = error.response?.data?.error || error.response?.data?.message || error.message;
+          alert('Error: ' + msg);
         }
       }
     },
@@ -274,3 +275,4 @@ export default {
   box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.15);
 }
 </style>
+

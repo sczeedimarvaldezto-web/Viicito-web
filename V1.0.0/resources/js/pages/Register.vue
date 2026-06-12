@@ -4,7 +4,7 @@
       <div class="card-header bg-success text-white text-center">
         <h4>🍾 Viicito - Registro</h4>
       </div>
-      <div class="card-body">
+      <div class="card-body dark-card-body">
         <form @submit.prevent="handleRegister">
           <div v-if="generalError" class="alert alert-danger mb-3" role="alert">
             <i class="bi bi-exclamation-circle me-2"></i>{{ generalError }}
@@ -15,7 +15,7 @@
               type="text"
               id="name"
               v-model="form.name"
-              class="form-control"
+              class="form-control dark-form-control"
               :class="{ 'is-invalid': errors.name }"
               @input="validateName"
               required
@@ -29,7 +29,7 @@
               type="email"
               id="email"
               v-model="form.email"
-              class="form-control"
+              class="form-control dark-form-control"
               :class="{ 'is-invalid': errors.email }"
               @input="validateEmail"
               required
@@ -43,7 +43,7 @@
               type="password"
               id="password"
               v-model="form.password"
-              class="form-control"
+              class="form-control dark-form-control"
               :class="{ 'is-invalid': errors.password }"
               @input="validatePassword"
               required
@@ -57,7 +57,7 @@
               type="password"
               id="password_confirmation"
               v-model="form.password_confirmation"
-              class="form-control"
+              class="form-control dark-form-control"
               :class="{ 'is-invalid': errors.password_confirmation }"
               @input="validatePasswordConfirmation"
               required
@@ -67,7 +67,7 @@
 
           <div class="mb-3" v-if="esOwner">
             <label for="role" class="form-label">Rol del nuevo usuario</label>
-            <select id="role" v-model="form.role" class="form-select">
+            <select id="role" v-model="form.role" class="form-select dark-form-select">
               <option value="employee">Empleado</option>
               <option value="owner">Propietario</option>
             </select>
@@ -116,7 +116,11 @@ export default {
              !this.errors.name && !this.errors.email && !this.errors.password && !this.errors.password_confirmation;
     },
     esOwner() {
-      return this.$root?.usuarioLogueado?.role?.name === 'owner';
+      const user = this.$root?.usuarioLogueado;
+      if (!user) return false;
+      const rol = user?.rol || 
+                  (typeof user?.role === 'object' ? user?.role?.name : user?.role);
+      return rol === 'owner';
     }
   },
   methods: {
