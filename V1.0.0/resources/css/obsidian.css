@@ -1,0 +1,533 @@
+/* ============================================
+   OBSIDIAN SOMMELIER DESIGN SYSTEM
+   Color Palette & Global Styles
+   ============================================ */
+
+:root {
+  /* Surface Colors */
+  --color-background: #131313;
+  --color-surface: #131313;
+  --color-surface-dim: #131313;
+  --color-surface-bright: #3a3939;
+  --color-surface-container-lowest: #0e0e0e;
+  --color-surface-container-low: #1c1b1b;
+  --color-surface-container: #201f1f;
+  --color-surface-container-high: #2a2a2a;
+  --color-surface-container-highest: #353534;
+  --color-surface-variant: #353534;
+
+  /* Primary Colors (Amber) */
+  --color-primary: #ffe2ab;
+  --color-primary-fixed: #ffdfa0;
+  --color-primary-fixed-dim: #fbbc00;
+  --color-primary-container: #ffbf00;
+
+  /* Secondary Colors (Gold) */
+  --color-secondary: #e9c176;
+  --color-secondary-fixed: #ffdea5;
+  --color-secondary-fixed-dim: #e9c176;
+  --color-secondary-container: #604403;
+
+  /* Tertiary Colors (Neutral) */
+  --color-tertiary: #e6e5e3;
+  --color-tertiary-fixed: #e3e2e0;
+  --color-tertiary-container: #cac9c7;
+
+  /* On/Text Colors */
+  --color-on-surface: #e5e2e1;
+  --color-on-surface-variant: #d4c5ab;
+  --color-on-primary: #402d00;
+  --color-on-primary-container: #6d5000;
+  --color-on-secondary: #412d00;
+  --color-on-secondary-container: #dab36a;
+  --color-on-tertiary: #303130;
+  --color-on-tertiary-container: #545453;
+
+  /* Outline Colors */
+  --color-outline: #9c8f78;
+  --color-outline-variant: #504532;
+  --color-inverse-on-surface: #313030;
+  --color-inverse-surface: #e5e2e1;
+  --color-inverse-primary: #795900;
+
+  /* Error Colors */
+  --color-error: #ffb4ab;
+  --color-error-container: #93000a;
+  --color-on-error: #690005;
+  --color-on-error-container: #ffdad6;
+
+  /* Tint */
+  --color-surface-tint: #fbbc00;
+
+  /* Text Colors */
+  --color-text-primary: #e5e2e1;
+  --color-text-secondary: #e9c176;
+  --color-text-disabled: #e5e2e1;
+  opacity: 0.38;
+}
+
+/* ============================================
+   RESET & BASE STYLES
+   ============================================ */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  background-color: var(--color-background);
+  color: var(--color-on-surface);
+  font-family: 'Manrope', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  line-height: 1.6;
+  letter-spacing: 0.3px;
+}
+
+/* ============================================
+   TYPOGRAPHY
+   ============================================ */
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: 'Noto Serif', serif;
+  font-weight: 700;
+  color: var(--color-on-surface);
+  margin-bottom: 0.5rem;
+}
+
+h1 {
+  font-size: 3.5rem;
+  letter-spacing: -0.02em;
+}
+
+h2 {
+  font-size: 2.75rem;
+  letter-spacing: -0.01em;
+}
+
+h3 {
+  font-size: 2.25rem;
+}
+
+h4 {
+  font-size: 1.75rem;
+}
+
+p {
+  margin-bottom: 1rem;
+  color: var(--color-on-surface);
+}
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color 0.3s ease;
+}
+
+a:hover {
+  color: var(--color-primary-container);
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+
+.btn,
+button {
+  font-family: 'Manrope', sans-serif;
+  font-weight: 600;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border: none;
+  padding: 0.75rem 1.5rem;
+}
+
+.btn-primary,
+button[type='submit'] {
+  background-color: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+}
+
+.btn-primary:hover,
+button[type='submit']:hover {
+  background-color: var(--color-primary);
+  filter: brightness(1.1);
+}
+
+.btn-secondary {
+  background-color: transparent;
+  border: 1px solid rgba(255, 191, 0, 0.2);
+  color: var(--color-primary);
+}
+
+.btn-secondary:hover {
+  background-color: rgba(53, 53, 52, 0.1);
+  border-color: rgba(255, 191, 0, 0.4);
+}
+
+.btn-ghost {
+  background-color: transparent;
+  color: var(--color-secondary);
+}
+
+.btn-ghost:hover {
+  background-color: rgba(233, 193, 118, 0.1);
+}
+
+/* ============================================
+   CARDS & CONTAINERS
+   ============================================ */
+
+.card {
+  background: linear-gradient(
+    135deg,
+    rgba(30, 27, 27, 0.6) 0%,
+    rgba(53, 53, 52, 0.1) 100%
+  );
+  border: 1px solid rgba(255, 191, 0, 0.1);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+  color: var(--color-on-surface);
+}
+
+.card:hover {
+  border-color: rgba(255, 191, 0, 0.3);
+  box-shadow: 0 8px 24px rgba(255, 191, 0, 0.1);
+}
+
+.card-header {
+  background: transparent;
+  border-color: rgba(255, 191, 0, 0.1);
+  color: var(--color-on-surface);
+}
+
+.card-body {
+  padding: 1rem 0;
+  color: var(--color-on-surface);
+}
+
+.card-footer {
+  background: transparent;
+  border-color: rgba(255, 191, 0, 0.1);
+}
+
+/* ============================================
+   FORMS
+   ============================================ */
+
+input,
+textarea,
+select {
+  background-color: var(--color-surface-container-low);
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 0.5rem;
+  color: var(--color-on-surface);
+  padding: 0.75rem 1rem;
+  font-family: 'Manrope', sans-serif;
+  transition: all 0.3s ease;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--color-primary-container);
+  box-shadow: 0 0 0 3px rgba(255, 191, 0, 0.1);
+  background-color: var(--color-surface-container);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: rgba(229, 226, 225, 0.5);
+}
+
+.form-label {
+  color: var(--color-on-surface);
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.form-check-input {
+  border-color: var(--color-outline-variant);
+  background-color: var(--color-surface-container-low);
+}
+
+.form-check-input:checked {
+  background-color: var(--color-primary-container);
+  border-color: var(--color-primary-container);
+}
+
+/* ============================================
+   ALERTS
+   ============================================ */
+
+.alert {
+  border-radius: 0.75rem;
+  border: 1px solid transparent;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.alert-success {
+  background-color: rgba(74, 222, 128, 0.1);
+  border-color: rgba(74, 222, 128, 0.3);
+  color: #4ade80;
+}
+
+.alert-danger {
+  background-color: rgba(255, 107, 107, 0.1);
+  border-color: rgba(255, 107, 107, 0.3);
+  color: #ff6b6b;
+}
+
+.alert-warning {
+  background-color: rgba(255, 191, 0, 0.1);
+  border-color: rgba(255, 191, 0, 0.3);
+  color: #ffbf00;
+}
+
+.alert-info {
+  background-color: rgba(96, 165, 250, 0.1);
+  border-color: rgba(96, 165, 250, 0.3);
+  color: #60a5fa;
+}
+
+/* ============================================
+   NAVIGATION
+   ============================================ */
+
+.navbar,
+nav {
+  background-color: var(--color-surface-container-lowest);
+  border-bottom: 1px solid rgba(255, 191, 0, 0.1);
+  padding: 1rem 1.5rem;
+}
+
+.nav-link {
+  color: rgba(229, 226, 225, 0.6);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  text-decoration: none;
+}
+
+.nav-link:hover {
+  color: var(--color-primary-container);
+  background-color: rgba(53, 53, 52, 0.1);
+  transform: translateX(4px);
+}
+
+.nav-link.active {
+  color: var(--color-primary-container);
+  background-color: rgba(53, 53, 52, 0.3);
+  border-left: 2px solid var(--color-primary-container);
+}
+
+/* ============================================
+   BADGES & TAGS
+   ============================================ */
+
+.badge {
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  display: inline-block;
+}
+
+.badge-primary {
+  background-color: var(--color-primary-container);
+  color: var(--color-on-primary-container);
+}
+
+.badge-secondary {
+  background-color: var(--color-secondary-container);
+  color: var(--color-on-secondary-container);
+}
+
+.badge-success {
+  background-color: rgba(74, 222, 128, 0.2);
+  color: #4ade80;
+}
+
+.badge-danger {
+  background-color: rgba(255, 107, 107, 0.2);
+  color: #ff6b6b;
+}
+
+/* ============================================
+   TABLES
+   ============================================ */
+
+.table {
+  color: var(--color-on-surface);
+  border-collapse: collapse;
+}
+
+.table th {
+  background-color: var(--color-surface-container-high);
+  border-color: rgba(255, 191, 0, 0.1);
+  color: var(--color-on-surface);
+  font-weight: 600;
+}
+
+.table td {
+  border-color: rgba(255, 191, 0, 0.1);
+  padding: 1rem;
+}
+
+.table tbody tr:hover {
+  background-color: var(--color-surface-container-low);
+}
+
+.table tbody tr:nth-child(even) {
+  background-color: rgba(53, 53, 52, 0.05);
+}
+
+/* ============================================
+   SCROLLBAR (Dark Mode)
+   ============================================ */
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-surface-container-lowest);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-surface-container-high);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-outline);
+}
+
+/* ============================================
+   UTILITY CLASSES
+   ============================================ */
+
+.text-gradient-amber {
+  background: linear-gradient(180deg, #ffe2ab 0%, #ffbf00 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.glass-panel {
+  background: rgba(53, 53, 52, 0.4);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 191, 0, 0.1);
+}
+
+.amber-glow {
+  filter: drop-shadow(0 0 12px rgba(255, 191, 0, 0.4));
+}
+
+.elevation-1 {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+}
+
+.elevation-2 {
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.16);
+}
+
+.elevation-3 {
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.19);
+}
+
+/* ============================================
+   RESPONSIVE UTILITIES
+   ============================================ */
+
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2.5rem;
+  }
+
+  h2 {
+    font-size: 2rem;
+  }
+
+  h3 {
+    font-size: 1.5rem;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .btn {
+    padding: 0.625rem 1.25rem;
+    font-size: 0.875rem;
+  }
+}
+
+@media (max-width: 480px) {
+  h1 {
+    font-size: 2rem;
+  }
+
+  h2 {
+    font-size: 1.5rem;
+  }
+
+  h3 {
+    font-size: 1.25rem;
+  }
+
+  .card {
+    padding: 0.75rem;
+  }
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+.slide-in {
+  animation: slideIn 0.3s ease;
+}
