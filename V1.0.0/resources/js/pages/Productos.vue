@@ -12,7 +12,7 @@
       <router-link v-if="!vistaAlertas" to="/productos/nuevo" class="btn btn-primary">
         ➕ Nuevo Producto
       </router-link>
-      <button v-else @click="mostrarTodos" class="btn btn-secondary">
+      <button v-else-if="vistaAlertas" @click="mostrarTodos" class="btn btn-secondary">
         ← Ver todos los productos
       </button>
     </div>
@@ -166,7 +166,7 @@
                 ? 'No se encontraron resultados' 
                 : 'No hay productos registrados') }}
           </h4>
-          <router-link v-if="!vistaAlertas" to="/productos/nuevo" class="btn btn-primary">
+          <router-link to="/productos/nuevo" class="btn btn-primary">
             ➕ Añadir nuevo producto
           </router-link>
         </div>
@@ -248,15 +248,6 @@
                   </option>
                 </select>
               </div>
-              <div class="col-md-6 mb-3">
-                <label class="dark-label">Marca</label>
-                <select class="form-select dark-form-select" v-model="productoEditado.id_marca" required>
-                  <option value="">Seleccione una marca</option>
-                  <option v-for="mar in marcas" :key="mar.id_marca" :value="mar.id_marca">
-                    {{ mar.nombre_marca }}
-                  </option>
-                </select>
-              </div>
               <div class="col-md-12 mb-3">
                 <label class="dark-label">Descripción</label>
                 <textarea class="form-control dark-form-control" v-model="productoEditado.descripcion" rows="2"></textarea>
@@ -327,7 +318,6 @@ export default {
     return {
       productos: [],
       categorias: [],
-      marcas: [],
       cargando: false,
       paginaActual: 1,
       totalPaginas: 1,
@@ -349,6 +339,11 @@ export default {
     };
   },
   computed: {
+    esOwner() {
+      const user = JSON.parse(localStorage.getItem('user') || 'null');
+      const roleName = user?.rol || (typeof user?.role === 'object' ? user?.role?.name : user?.role);
+      return roleName === 'owner';
+    },
     vistaAlertas() {
       return this.filtros.stock_bajo === '1' || this.$route.query.stock_bajo === '1';
     },
@@ -365,7 +360,6 @@ export default {
       this.filtros.stock_bajo = '1';
     }
     this.cargarCategorias();
-    this.cargarMarcas();
     this.cargarProductos();
   },
   methods: {
@@ -406,14 +400,7 @@ export default {
       }
     },
 
-    async cargarMarcas() {
-      try {
-        const response = await api.get('/marcas');
-        this.marcas = response.data.data || response.data;
-      } catch (error) {
-        console.error('Error cargando marcas:', error);
-      }
-    },
+
 
     buscar() {
       clearTimeout(this.timeoutBusqueda);

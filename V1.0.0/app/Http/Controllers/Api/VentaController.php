@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Models\Compra;
 use App\Models\Venta;
 use App\Models\DetalleVenta;
 use App\Models\Producto;
 use App\Services\ComprobanteVentaPdfService;
+use App\Services\ReportExportService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +20,8 @@ use Illuminate\Support\Facades\DB;
 class VentaController extends Controller
 {
     public function __construct(
-        private ComprobanteVentaPdfService $pdfService
+        private ComprobanteVentaPdfService $pdfService,
+        private ReportExportService $exportService
     ) {}
 
     /**
@@ -26,31 +29,51 @@ class VentaController extends Controller
      */
     public function index(Request $request)
     {
+        \Log::info('🔍 VentaController@index - Parámetros recibidos:', [
+            'all_params' => $request->all(),
+            'fecha_inicio' => $request->fecha_inicio,
+            'fecha_final' => $request->fecha_final,
+            'metodo_pago' => $request->metodo_pago,
+        ]);
+
         $query = Venta::with(['usuario', 'detalles.producto']);
 
         // Filtros
-        if ($request->has('estado')) {
+        if ($request->has('estado') && !empty($request->estado)) {
             $query->where('estado', $request->estado);
         }
 
-        if ($request->has('vendedor')) {
+        if ($request->has('vendedor') && !empty($request->vendedor)) {
             $query->where('id_usuario', $request->vendedor);
         }
 
-
-
-        if ($request->has('fecha_inicio') && $request->has('fecha_final')) {
+        // Rango de fechas - FILTRO PRINCIPAL
+        if ($request->has('fecha_inicio') && $request->has('fecha_final') && 
+            !empty($request->fecha_inicio) && !empty($request->fecha_final)) {
+            \Log::info('✓ Aplicando filtro de rango de fechas', [
+                'inicio' => $request->fecha_inicio,
+                'fin' => $request->fecha_final,
+            ]);
             $query->rangoFechas(
                 $request->fecha_inicio,
                 $request->fecha_final
             );
         }
 
-        if ($request->has('metodo_pago')) {
+        // Método de pago - SOLO SI NO ESTÁ VACÍO
+        if ($request->has('metodo_pago') && !empty($request->metodo_pago)) {
+            \Log::info('✓ Aplicando filtro de método de pago', ['metodo' => $request->metodo_pago]);
             $query->where('metodo_pago', $request->metodo_pago);
         }
 
         $ventas = $query->orderBy('fecha_hora', 'desc')->paginate($request->get('per_page', 15));
+        
+        \Log::info('📊 Ventas encontradas', [
+            'total' => $ventas->total(),
+            'count' => count($ventas->items()),
+            'query' => $query->toSql(),
+            'bindings' => $query->getBindings(),
+        ]);
 
         return response()->json($ventas);
     }
@@ -80,8 +103,8 @@ class VentaController extends Controller
         ]);
 
         $validated = $request->validate([
-            'id_usuario' => 'required|integer|exists:usuario,id_usuario',  // ✅ Validar en tabla 'usuario' con columna 'id_usuario'
-            'metodo_pago' => 'required|in:Efectivo,Tarjeta,Cheque,Crédito',
+            'id_usuario' => 'required|integer|exists:users,id',
+            'metodo_pago' => 'required|in:Efectivo,QR',
             'observacion' => 'nullable|string',
             'items' => 'required|array',
             'items.*.id_producto' => 'required|exists:producto,id_producto',
@@ -114,9 +137,9 @@ class VentaController extends Controller
                 $subtotal += $subtotal_item;
             }
 
-            // Calcular impuesto (21% IVA)
-            $impuesto = $subtotal * 0.21;
-            $total = $subtotal + $impuesto;
+            // El sistema ya no aplica IVA en esta venta.
+            $impuesto = 0;
+            $total = $subtotal;
 
             // Generar número de documento
             $ultimo = Venta::latest('id_venta')->first();
@@ -233,6 +256,134 @@ class VentaController extends Controller
     }
 
     /**
+     * GET /api/reportes/exportar - Exportar ventas, compras o inventario como CSV
+     */
+    public function exportar(Request $request)
+    {
+        $tipo = $request->input('tipo', 'ventas');
+
+        if ($tipo === 'ventas') {
+            $query = Venta::query()->with(['usuario']);
+
+            if ($request->filled('fecha_inicio')) {
+                $query->whereDate('fecha_hora', '>=', $request->fecha_inicio);
+            }
+
+            if ($request->filled('fecha_final')) {
+                $query->whereDate('fecha_hora', '<=', $request->fecha_final);
+            }
+
+            if ($request->filled('metodo_pago')) {
+                $query->where('metodo_pago', $request->metodo_pago);
+            }
+
+            if ($request->filled('estado')) {
+                $query->where('estado', $request->estado);
+            }
+
+            return $this->streamCsv($query, $this->exportService->salesHeaders(), $this->exportService->filename('ventas'), function ($venta) {
+                return [
+                    $venta->numero_documento,
+                    $venta->fecha_hora,
+                    number_format((float) $venta->subtotal, 2, '.', ''),
+                    number_format((float) $venta->impuesto, 2, '.', ''),
+                    number_format((float) $venta->total_venta, 2, '.', ''),
+                    $venta->metodo_pago ?? '-',
+                    $venta->estado ?? 'Completada',
+                ];
+            });
+        }
+
+        if ($tipo === 'compras') {
+            $query = Compra::query()->with(['proveedor']);
+
+            if ($request->filled('fecha_inicio')) {
+                $query->whereDate('fecha_hora', '>=', $request->fecha_inicio);
+            }
+
+            if ($request->filled('fecha_final')) {
+                $query->whereDate('fecha_hora', '<=', $request->fecha_final);
+            }
+
+            if ($request->filled('id_proveedor')) {
+                $query->where('id_proveedor', $request->id_proveedor);
+            }
+
+            return $this->streamCsv($query, $this->exportService->comprasHeaders(), $this->exportService->filename('compras'), function ($compra) {
+                return [
+                    $compra->id_compra,
+                    $compra->fecha_hora,
+                    $compra->proveedor->nombre_empresa ?? '-',
+                    number_format((float) $compra->total_compra, 2, '.', ''),
+                    'Completada',
+                ];
+            });
+        }
+
+        if ($tipo === 'inventario') {
+            $query = Producto::query()->with(['categoria', 'marca']);
+
+            if ($request->filled('buscar')) {
+                $query->where('nombre_producto', 'like', '%' . $request->buscar . '%');
+            }
+
+            if ($request->filled('category')) {
+                $query->where('id_categoria', $request->category);
+            }
+
+            if ($request->filled('brand')) {
+                $query->where('id_marca', $request->brand);
+            }
+
+            return $this->streamCsv($query, $this->exportService->inventoryHeaders(), $this->exportService->filename('inventario'), function ($producto) {
+                $valorTotal = (float) $producto->stock_actual * (float) ($producto->precio_compra ?? 0);
+
+                return [
+                    $producto->sku ?? $producto->codigo_barras,
+                    $producto->nombre_producto,
+                    $producto->categoria->nombre_categoria ?? '-',
+                    $producto->marca->nombre_marca ?? '-',
+                    (int) $producto->stock_actual,
+                    number_format((float) $producto->precio_compra, 2, '.', ''),
+                    number_format($valorTotal, 2, '.', ''),
+                ];
+            });
+        }
+
+        return response()->json(['message' => 'Tipo de exportación no soportado.'], 400);
+    }
+
+    private function streamCsv($query, array $headers, string $filename, callable $rowFormatter)
+    {
+        return response()->streamDownload(function () use ($query, $headers, $rowFormatter) {
+            $handle = fopen('php://output', 'w');
+
+            fputcsv($handle, $headers);
+
+            $model = $query->getModel();
+            $primaryKey = $model->getKeyName();
+            $query->orderBy($primaryKey, 'desc');
+
+            if (method_exists($query, 'chunkById')) {
+                $query->chunkById(500, function ($items) use ($handle, $rowFormatter) {
+                    foreach ($items as $item) {
+                        fputcsv($handle, $rowFormatter($item));
+                    }
+                }, $primaryKey);
+            } else {
+                foreach ($query->get() as $item) {
+                    fputcsv($handle, $rowFormatter($item));
+                }
+            }
+
+            fclose($handle);
+        }, $filename, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Cache-Control' => 'no-store, no-cache',
+        ]);
+    }
+
+    /**
      * GET /api/ventas/reporte/diario - Reporte de ventas diarias
      */
     public function reporteDiario(Request $request)
@@ -248,8 +399,7 @@ class VentaController extends Controller
             'cantidad_transacciones' => $ventas->count(),
             'total_ventas' => $ventas->sum('total_venta'),
             'total_efectivo' => $ventas->where('metodo_pago', 'Efectivo')->sum('total_venta'),
-            'total_tarjeta' => $ventas->where('metodo_pago', 'Tarjeta')->sum('total_venta'),
-            'total_credito' => $ventas->where('metodo_pago', 'Crédito')->sum('total_venta'),
+            'total_qr' => $ventas->where('metodo_pago', 'QR')->sum('total_venta'),
         ];
 
         return response()->json([

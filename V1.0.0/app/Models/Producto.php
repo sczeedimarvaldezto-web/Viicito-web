@@ -35,6 +35,7 @@ class Producto extends Model
         'grado_alcohol',
         'imagen_url',
         'estado',
+        'propietario_id',
     ];
 
     protected $casts = [
@@ -57,6 +58,11 @@ class Producto extends Model
     public function marca()
     {
         return $this->belongsTo(Marca::class, 'id_marca', 'id_marca');
+    }
+
+    public function propietario()
+    {
+        return $this->belongsTo(User::class, 'propietario_id', 'id');
     }
 
     public function detallesVenta()
@@ -110,11 +116,17 @@ class Producto extends Model
     /**
      * Construye la consulta base del inventario con relaciones y filtros.
      * Soporta ?category= / ?categoria= y ?brand= / ?marca=
+     * 
+     * IMPORTANTE: Retorna TODOS los productos del negocio para que empleados 
+     * puedan ver los productos creados por el propietario.
      */
     public static function queryInventario($request)
     {
-        $query = static::with(['categoria', 'marca']);
+        // Iniciar query con relaciones necesarias
+        // Nota: Laravel automáticamente excluye soft-deleted items
+        $query = static::with(['categoria', 'marca', 'propietario']);
 
+        // Filtros opcionales por parámetros
         $categoryId = $request->input('category', $request->input('categoria'));
         $brandId = $request->input('brand', $request->input('marca'));
 
@@ -126,6 +138,7 @@ class Producto extends Model
             $query->where('id_marca', $brandId);
         }
 
+        // Si se especifica estado, filtrar por él; sino, devolver TODOS
         if ($request->has('estado')) {
             $query->where('estado', $request->estado);
         }

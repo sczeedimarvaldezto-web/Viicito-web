@@ -3,26 +3,33 @@
     <h1 class="mb-4">➕ Nueva Venta POS</h1>
 
     <div class="row">
-      <!-- Panel de búsqueda de productos -->
       <div class="col-md-8">
         <div class="card mb-3 dark-card dark-card">
           <div class="card-header fw-bold dark-card dark-card text-white">Seleccione Productos</div>
           <div class="card-body dark-card-body dark-card dark-card-body dark-card dark-card-body">
-            <!-- Búsqueda de productos -->
-            <div class="input-group mb-3">
-              <input
-                v-model="busquedaProducto"
-                @input="buscarProductos"
-                type="text"
-                class="form-control dark-form-control dark-form-control dark-form-control"
-                placeholder="Buscar por nombre, código de barras..."
+            <div class="d-flex gap-2 mb-3">
+              <div class="flex-grow-1">
+                <div class="input-group">
+                  <input
+                    v-model="busquedaProducto"
+                    @input="buscarProductos"
+                    @keyup.enter="escanearProducto"
+                    ref="inputBuscador"
+                    type="text"
+                    class="form-control dark-form-control dark-form-control dark-form-control"
+                    placeholder="Buscar por nombre, código de barras..."
+                  />
+                  <button @click="limpiarBusqueda" class="btn btn-secondary">
+                    Limpiar
+                  </button>
+                </div>
+              </div>
+              <SalesBarcodeScan
+                @products-scanned="onProductsScanned"
+                :onProductFound="buscarProductoPorCodigo"
               />
-              <button @click="limpiarBusqueda" class="btn btn-secondary">
-                Limpiar
-              </button>
             </div>
 
-            <!-- Productos disponibles -->
             <div v-if="productosEncontrados.length > 0" class="list-group">
               <button
                 v-for="prod in productosEncontrados"
@@ -50,7 +57,6 @@
         </div>
       </div>
 
-      <!-- Panel de carrito -->
       <div class="col-md-4">
         <div class="card sticky-top dark-card dark-card" style="top: 20px">
           <div class="card-header fw-bold dark-card dark-card text-white">🛒 Carrito de Venta</div>
@@ -104,7 +110,6 @@
             </div>
           </div>
 
-          <!-- Datos de venta y resumen -->
           <div class="card-footer dark-card dark-card">
             <div class="mb-3">
               <label class="form-label">Método de Pago</label>
@@ -112,21 +117,15 @@
                 <option value="">Seleccionar</option>
                 <option value="Efectivo">Efectivo</option>
                 <option value="QR">QR</option>
-                <option value="Con Tarjeta">Con Tarjeta</option>
               </select>
             </div>
 
-            <!-- Resumen -->
             <div class="bg-light p-2 rounded mb-3">
-              <div class="d-flex justify-content-between mb-2">
+              <div class="d-flex justify-content-between mb-2 text-dark">
                 <span>Subtotal:</span>
                 <strong>Bs. {{ subtotal.toFixed(2) }}</strong>
               </div>
-              <div class="d-flex justify-content-between mb-2">
-                <span>IVA (21%):</span>
-                <strong>Bs. {{ impuesto.toFixed(2) }}</strong>
-              </div>
-              <div class="d-flex justify-content-between border-top pt-2">
+              <div class="d-flex justify-content-between border-top pt-2 text-dark">
                 <span>TOTAL:</span>
                 <h5>Bs. {{ total.toFixed(2) }}</h5>
               </div>
@@ -147,7 +146,6 @@
       </div>
     </div>
 
-    <!-- Modal Comprobante -->
     <div v-if="modalComprobanteAbierto" class="modal-backdrop fade show"></div>
     <div v-if="modalComprobanteAbierto" class="modal fade show d-block" tabindex="-1" style="background: rgba(0,0,0,0.5);">
       <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -157,15 +155,13 @@
             <button type="button" class="btn-close btn-close-white" @click="cerrarComprobante"></button>
           </div>
           <div class="modal-body">
-            <div v-if="ventaRegistrada" class="comprobante">
-              <!-- Encabezado -->
+            <div v-if="ventaRegistrada" class="comprobante text-dark">
               <div class="text-center mb-4 pb-3 border-bottom">
                 <h3 class="mb-1">VIICITO</h3>
                 <p class="text-muted mb-1">Sistema de Gestión de Inventario</p>
                 <p class="text-muted small">Comprobante de Venta Electrónico</p>
               </div>
 
-              <!-- Número y fecha -->
               <div class="row mb-3">
                 <div class="col-6">
                   <strong>Documento:</strong>
@@ -177,8 +173,7 @@
                 </div>
               </div>
 
-              <!-- Detalles de productos -->
-              <table class="table dark-table dark-table dark-table dark-table table-sm mb-3">
+              <table class="table table-sm mb-3 text-dark">
                 <thead class="table-light">
                   <tr>
                     <th>Producto</th>
@@ -197,15 +192,10 @@
                 </tbody>
               </table>
 
-              <!-- Totales -->
               <div class="border-top pt-3">
                 <div class="row mb-2">
                   <div class="col-6 text-end"><strong>Subtotal:</strong></div>
                   <div class="col-6 text-end">Bs. {{ parseFloat(ventaRegistrada.subtotal).toFixed(2) }}</div>
-                </div>
-                <div class="row mb-2">
-                  <div class="col-6 text-end"><strong>IVA (21%):</strong></div>
-                  <div class="col-6 text-end">Bs. {{ parseFloat(ventaRegistrada.impuesto).toFixed(2) }}</div>
                 </div>
                 <div class="row border-top pt-2">
                   <div class="col-6 text-end"><strong>TOTAL:</strong></div>
@@ -213,7 +203,6 @@
                 </div>
               </div>
 
-              <!-- Método de pago -->
               <div class="mt-3 pt-3 border-top">
                 <p class="mb-0"><strong>Método de Pago:</strong> {{ ventaRegistrada.metodo_pago }}</p>
                 <p class="text-muted small mt-1">Gracias por su compra</p>
@@ -225,7 +214,7 @@
               Cerrar
             </button>
             <button type="button" class="btn btn-danger" @click="descargarPdfComprobante" :disabled="descargandoPdf">
-              📄 {{ descargandoPdf ? 'Generando PDF...' : 'Descargar PDF' }}
+              📄 {{ descargandoPdf ? 'Generando PDF...' : 'Ver PDF' }}
             </button>
             <button type="button" class="btn btn-primary" @click="imprimirComprobante">
               🖨️ Imprimir
@@ -238,7 +227,6 @@
       </div>
     </div>
 
-    <!-- Toast de éxito -->
     <div v-if="mensajeExito" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055">
       <div class="toast show align-items-center text-white bg-success border-0" role="alert">
         <div class="d-flex">
@@ -250,7 +238,6 @@
       </div>
     </div>
 
-    <!-- Toast de error -->
     <div v-if="mensajeError" class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055">
       <div class="toast show align-items-center text-white bg-danger border-0" role="alert">
         <div class="d-flex">
@@ -268,9 +255,13 @@
 import { api } from '@/services/api';
 import { notifyStockChanged } from '@/services/stockAlerts';
 import { descargarComprobantePdf } from '@/services/ventaPdf';
+import SalesBarcodeScan from '@/components/SalesBarcodeScan.vue';
 
 export default {
   name: 'NuevaVenta',
+  components: {
+    SalesBarcodeScan,
+  },
   data() {
     return {
       productos: [],
@@ -297,10 +288,10 @@ export default {
       );
     },
     impuesto() {
-      return this.subtotal * 0.21;
+      return 0;
     },
     total() {
-      return this.subtotal + this.impuesto;
+      return this.subtotal;
     },
   },
   mounted() {
@@ -309,8 +300,7 @@ export default {
     if (userData) {
       try {
         const usuario = JSON.parse(userData);
-        // El id_usuario viene del backend como id_usuario (que es el id de tabla users)
-        this.venta.id_usuario = parseInt(usuario.id_usuario, 10);
+        this.venta.id_usuario = parseInt(usuario.id_usuario ?? usuario.id, 10);
         
         if (!this.venta.id_usuario || isNaN(this.venta.id_usuario)) {
           console.error('Usuario no tiene id_usuario válido. Datos:', usuario);
@@ -318,7 +308,6 @@ export default {
           setTimeout(() => this.$router.push('/login'), 3000);
           return;
         }
-        console.log('ID Usuario para venta:', this.venta.id_usuario);
       } catch (error) {
         console.error('Error al parsear usuario:', error);
         this.mensajeError = 'Error al obtener datos del usuario.';
@@ -363,6 +352,130 @@ export default {
       this.productosEncontrados = [];
     },
 
+    // -------------------------------------------------------------
+    // EVENTO DEL LECTOR DE BARRAS
+    // -------------------------------------------------------------
+    async escanearProducto() {
+      const codigo = this.busquedaProducto.trim();
+      if (!codigo) return;
+
+      try {
+        // Disparar petición AJAX al backend
+        const response = await api.get(`/productos/buscar/codigo/${codigo}`);
+        const productoDb = response.data;
+
+        // Comprobar si el producto ya está en el carrito
+        const itemExistente = this.carrito.find(
+          (item) => item.id_producto === productoDb.id_producto
+        );
+
+        if (itemExistente) {
+          if (itemExistente.cantidad < itemExistente.stock_actual) {
+            itemExistente.cantidad += 1;
+            this.mensajeExito = `+1 ${itemExistente.nombre_producto}`;
+            setTimeout(() => (this.mensajeExito = ''), 2000);
+          } else {
+            this.mensajeError = `Stock insuficiente para ${itemExistente.nombre_producto}`;
+            setTimeout(() => (this.mensajeError = ''), 4000);
+          }
+        } else {
+          // Agregar al carrito si es nuevo
+          if (productoDb.stock_actual > 0) {
+            this.carrito.push({
+              id_producto: productoDb.id_producto,
+              nombre_producto: productoDb.nombre_producto,
+              cantidad: 1,
+              precio_unitario: parseFloat(productoDb.precio_venta || productoDb.precio), // Verifica cómo llega el precio desde tu backend
+              stock_actual: productoDb.stock_actual,
+            });
+            this.mensajeExito = `${productoDb.nombre_producto} agregado al carrito`;
+            setTimeout(() => (this.mensajeExito = ''), 2000);
+          } else {
+            this.mensajeError = `El producto ${productoDb.nombre_producto} está sin stock`;
+            setTimeout(() => (this.mensajeError = ''), 4000);
+          }
+        }
+
+        this.limpiarBusqueda();
+
+      } catch (error) {
+        // Si el backend retorna 404, mostramos el Toast rojo
+        if (error.response && error.response.status === 404) {
+          this.mensajeError = 'Producto no encontrado';
+          setTimeout(() => (this.mensajeError = ''), 3000);
+          this.busquedaProducto = ''; // Limpiamos para el próximo intento
+        } else {
+          this.mensajeError = 'Error de conexión al escanear';
+          setTimeout(() => (this.mensajeError = ''), 3000);
+        }
+      } finally {
+        // Mantener el foco en el input para lectura continua
+        this.$nextTick(() => {
+          this.$refs.inputBuscador?.focus();
+        });
+      }
+    },
+
+    // Método para buscar producto por código (usado por el scanner)
+    async buscarProductoPorCodigo(codigo, callback) {
+      try {
+        const response = await api.get(`/productos/buscar/codigo/${codigo}`);
+        const producto = response.data;
+        
+        if (producto && producto.stock_actual > 0) {
+          callback(producto);
+        } else {
+          this.mensajeError = `Producto no disponible o sin stock`;
+          setTimeout(() => (this.mensajeError = ''), 3000);
+          callback(null);
+        }
+      } catch (error) {
+        if (error.response?.status === 404) {
+          this.mensajeError = `Código de barras no encontrado: ${codigo}`;
+        } else {
+          this.mensajeError = 'Error al buscar el producto';
+        }
+        setTimeout(() => (this.mensajeError = ''), 3000);
+        callback(null);
+      }
+    },
+
+    // Manejar productos escaneados y agregarlos al carrito
+    onProductsScanned(scannedProducts) {
+      if (!scannedProducts || scannedProducts.length === 0) return;
+
+      let productosAgregados = 0;
+
+      scannedProducts.forEach((producto) => {
+        const yaEnCarrito = this.carrito.find(
+          (item) => item.id_producto === producto.id_producto
+        );
+
+        if (yaEnCarrito) {
+          // Si ya existe, incrementar cantidad (si hay stock)
+          if (yaEnCarrito.cantidad < yaEnCarrito.stock_actual) {
+            yaEnCarrito.cantidad += 1;
+            productosAgregados++;
+          }
+        } else {
+          // Si es nuevo, agregarlo
+          if (producto.stock_actual > 0) {
+            this.carrito.push({
+              id_producto: producto.id_producto,
+              nombre_producto: producto.nombre_producto,
+              cantidad: 1,
+              precio_unitario: parseFloat(producto.precio_venta || producto.precio),
+              stock_actual: producto.stock_actual,
+            });
+            productosAgregados++;
+          }
+        }
+      });
+
+      this.mensajeExito = `✓ ${productosAgregados} producto(s) agregado(s) al carrito`;
+      setTimeout(() => (this.mensajeExito = ''), 3000);
+    },
+
     agregarProducto(producto) {
       const yaEnCarrito = this.carrito.find(
         (item) => item.id_producto === producto.id_producto
@@ -375,7 +488,7 @@ export default {
           id_producto: producto.id_producto,
           nombre_producto: producto.nombre_producto,
           cantidad: 1,
-          precio_unitario: parseFloat(producto.precio_venta),
+          precio_unitario: parseFloat(producto.precio_venta || producto.precio),
           stock_actual: producto.stock_actual,
         });
       }
@@ -400,37 +513,31 @@ export default {
     },
 
     async completarVenta() {
-      // ✅ VALIDACIÓN 1: Carrito no vacío
       if (this.carrito.length === 0) {
         this.mensajeError = 'El carrito está vacío';
         setTimeout(() => this.mensajeError = '', 4000);
         return;
       }
       
-      // ✅ VALIDACIÓN 2: Usuario identificado
       if (!this.venta.id_usuario || isNaN(this.venta.id_usuario)) {
-        console.error('❌ id_usuario inválido:', this.venta.id_usuario);
         this.mensajeError = 'Error: Usuario no identificado. Por favor inicia sesión nuevamente.';
         setTimeout(() => this.$router.push('/login'), 2000);
         return;
       }
       
-      // ✅ VALIDACIÓN 3: Método de pago seleccionado
       if (!this.venta.metodo_pago) {
         this.mensajeError = 'Por favor selecciona un método de pago';
         setTimeout(() => this.mensajeError = '', 4000);
         return;
       }
 
-      // ✅ VALIDACIÓN 4: Método de pago válido (debe ser uno de los permitidos)
-      const metodosPermitidos = ['Efectivo', 'QR', 'Con Tarjeta'];
+      const metodosPermitidos = ['Efectivo', 'QR'];
       if (!metodosPermitidos.includes(this.venta.metodo_pago)) {
         this.mensajeError = `Método de pago inválido: ${this.venta.metodo_pago}. Debe ser uno de: ${metodosPermitidos.join(', ')}`;
         setTimeout(() => this.mensajeError = '', 4000);
         return;
       }
 
-      // ✅ VALIDACIÓN 5: Items válidos
       for (let i = 0; i < this.carrito.length; i++) {
         const item = this.carrito[i];
         if (!item.id_producto || isNaN(item.id_producto)) {
@@ -447,7 +554,6 @@ export default {
         }
       }
 
-      // ✅ VALIDACIÓN 6: Stock disponible en tiempo real
       try {
         for (const item of this.carrito) {
           const productoActual = await api.get(`/productos/${item.id_producto}`);
@@ -466,7 +572,6 @@ export default {
 
       this.cargando = true;
       try {
-        // ✅ Construir payload con tipos correctos
         const payload = {
           id_usuario: parseInt(this.venta.id_usuario, 10),
           metodo_pago: String(this.venta.metodo_pago).trim(),
@@ -477,13 +582,7 @@ export default {
           })),
         };
 
-        // 📋 Logging para debugging
-        console.log('📤 Enviando payload a /api/ventas:', JSON.stringify(payload, null, 2));
-
         const response = await api.post('/ventas', payload);
-
-        console.log('✅ Respuesta exitosa del servidor:', response.data);
-
         notifyStockChanged();
 
         const data = response.data;
@@ -493,22 +592,7 @@ export default {
 
         this.modalComprobanteAbierto = true;
 
-        // Abrir comprobante PDF automáticamente tras el pago exitoso
-        try {
-          await descargarComprobantePdf(this.ventaRegistrada.id_venta);
-        } catch (pdfError) {
-          console.warn('No se pudo abrir el PDF automáticamente:', pdfError);
-        }
       } catch (error) {
-        console.error('❌ Error COMPLETO en POST /api/ventas:', {
-          status: error.response?.status,
-          statusText: error.response?.statusText,
-          data: error.response?.data,
-          errors: error.response?.data?.errors,
-          message: error.response?.data?.message,
-          error_field: error.response?.data?.error,
-        });
-
         const errorMsg = error.response?.data?.errors ? 
           Object.values(error.response.data.errors).flat().join(', ') :
           error.response?.data?.message || 
@@ -527,7 +611,6 @@ export default {
     },
 
     nuevaVenta() {
-      // Vaciar carrito y cerrar modal
       this.carrito = [];
       this.venta.metodo_pago = '';
       this.ventaRegistrada = null;
@@ -545,7 +628,7 @@ export default {
 
       this.descargandoPdf = true;
       try {
-        await descargarComprobantePdf(this.ventaRegistrada.id_venta, false);
+        await descargarComprobantePdf(this.ventaRegistrada.id_venta, true);
       } catch (error) {
         this.mensajeError = 'Error al generar el PDF del comprobante';
         setTimeout(() => this.mensajeError = '', 4000);
@@ -611,6 +694,3 @@ export default {
   }
 }
 </style>
-
-
-

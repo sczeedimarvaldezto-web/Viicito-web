@@ -15,15 +15,6 @@
       </li>
       <li class="nav-item" role="presentation">
         <button
-          @click="tabActiva = 'compras'"
-          :class="{ active: tabActiva === 'compras' }"
-          class="nav-link"
-        >
-          📦 Compras
-        </button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button
           @click="tabActiva = 'inventario'"
           :class="{ active: tabActiva === 'inventario' }"
           class="nav-link"
@@ -129,7 +120,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="venta in ventasDetalle" :key="venta.id_venta" class="text-light">
+                <tr v-for="venta in ventasDetalle" :key="venta.id_venta" class="text-dark">
                   <td class="fw-bold">{{ venta.numero_documento }}</td>
                   <td>{{ formatFecha(venta.fecha_hora) }}</td>
                   <td>{{ formatCurrency(venta.subtotal) }}</td>
@@ -141,107 +132,6 @@
             </table>
           </div>
           <div v-else class="alert alert-info">No se encontraron ventas en el periodo seleccionado</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- TAB: Reportes de Compras -->
-    <div v-if="tabActiva === 'compras'" class="tab-content">
-      <div class="row mb-4">
-        <div class="col-md-2">
-          <label class="form-label">Desde</label>
-          <input
-            v-model="filtrosCompras.fecha_inicio"
-            @change="generarReporteCompras"
-            type="date"
-            class="form-control dark-form-control"
-          />
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">Hasta</label>
-          <input
-            v-model="filtrosCompras.fecha_final"
-            @change="generarReporteCompras"
-            type="date"
-            class="form-control dark-form-control"
-          />
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">Proveedor</label>
-          <select
-            v-model="filtrosCompras.id_proveedor"
-            @change="generarReporteCompras"
-            class="form-select dark-form-select"
-          >
-            <option value="">Todos</option>
-            <option v-for="prov in proveedores" :key="prov.id_proveedor" :value="prov.id_proveedor">
-              {{ prov.nombre_empresa }}
-            </option>
-          </select>
-        </div>
-        <div class="col-md-4">
-          <label class="form-label">&nbsp;</label>
-          <button @click="exportarCompras" class="btn btn-info w-100">
-            📥 Exportar CSV
-          </button>
-        </div>
-      </div>
-
-      <div class="row mb-3">
-        <div class="col-md-4">
-          <div class="card bg-warning text-dark">
-            <div class="card-body dark-card-body">
-              <h6>Total Invertido</h6>
-              <h3>{{ formatCurrency(reporteCompras.totalCompras) }}</h3>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card bg-info text-white">
-            <div class="card-body dark-card-body">
-              <h6>Órdenes</h6>
-              <h3>{{ reporteCompras.cantidadOrdenes }}</h3>
-            </div>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="card bg-danger text-white">
-            <div class="card-body dark-card-body">
-              <h6>Pendiente Recibir</h6>
-              <h3>{{ formatCurrency(reporteCompras.pendienteRecibir) }}</h3>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card dark-card">
-        <div class="card-header fw-bold">Detalle de Compras</div>
-        <div class="card-body dark-card-body">
-          <div v-if="comprasDetalle.length > 0" class="table-responsive">
-            <table class="table dark-table table-hover table-sm detail-table">
-              <thead class="table-dark">
-                <tr>
-                  <th>Orden</th>
-                  <th>Fecha</th>
-                  <th>Proveedor</th>
-                  <th class="text-end">Total</th>
-                  <th>Recibido</th>
-                  <th>Estado</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="compra in comprasDetalle" :key="compra.id_compra" class="text-light">
-                  <td class="fw-bold">{{ compra.numero_orden }}</td>
-                  <td>{{ formatFecha(compra.fecha_pedido) }}</td>
-                  <td>{{ compra.proveedor?.nombre_empresa }}</td>
-                  <td class="fw-bold text-end">{{ formatCurrency(compra.total_compra) }}</td>
-                  <td>{{ compra.cantidad_recibida }} / {{ compra.cantidad_solicitada }}</td>
-                  <td><span class="badge" :class="estadoBadge(compra.estado)">{{ compra.estado }}</span></td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          <div v-else class="alert alert-info">No hay compras en el período seleccionado</div>
         </div>
       </div>
     </div>
@@ -343,7 +233,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="prod in inventarioDetalle" :key="prod.id_producto" class="text-light">
+                <tr v-for="prod in inventarioDetalle" :key="prod.id_producto" class="text-dark">
                   <td class="fw-bold">{{ prod.sku || prod.codigo_barras }}</td>
                   <td>{{ prod.nombre_producto }}</td>
                   <td>{{ prod.categoria?.nombre_categoria || '-' }}</td>
@@ -385,20 +275,6 @@ export default {
         margenBruto: 0,
       },
       ventasDetalle: [],
-      // Compras
-      filtrosCompras: {
-        fecha_inicio: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000)
-          .toISOString()
-          .split('T')[0],
-        fecha_final: new Date().toISOString().split('T')[0],
-        id_proveedor: '',
-      },
-      reporteCompras: {
-        totalCompras: 0,
-        cantidadOrdenes: 0,
-        pendienteRecibir: 0,
-      },
-      comprasDetalle: [],
       proveedores: [],
       // Inventario
       filtrosInventario: {
@@ -422,8 +298,6 @@ export default {
       if (val === 'inventario') {
         this.cargarCatalogosInventario();
         this.generarReporteInventario();
-      } else if (val === 'compras') {
-        this.generarReporteCompras();
       }
     },
   },
@@ -490,41 +364,6 @@ export default {
       }
     },
 
-    async generarReporteCompras() {
-      try {
-        // Validar que fecha_inicio no sea posterior a fecha_final
-        if (this.filtrosCompras.fecha_inicio && this.filtrosCompras.fecha_final) {
-          const fechaInicio = new Date(this.filtrosCompras.fecha_inicio);
-          const fechaFinal = new Date(this.filtrosCompras.fecha_final);
-          
-          if (fechaInicio > fechaFinal) {
-            alert('❌ Error: La fecha de inicio no puede ser posterior a la fecha final. Por favor, ajuste el rango de fechas.');
-            this.comprasDetalle = [];
-            this.reporteCompras = {
-              totalCompras: 0,
-              cantidadOrdenes: 0,
-              pendienteRecibir: 0,
-            };
-            return;
-          }
-        }
-        
-        const response = await api.get('/compras', { params: this.filtrosCompras });
-        const compras = response.data.data || response.data;
-        
-        this.comprasDetalle = compras;
-        this.reporteCompras = {
-          totalCompras: compras.reduce((sum, c) => sum + parseFloat(c.total_compra || 0), 0),
-          cantidadOrdenes: compras.length,
-          pendienteRecibir: compras
-            .filter((c) => c.estado !== 'Completada')
-            .reduce((sum, c) => sum + parseFloat(c.total_compra || 0), 0),
-        };
-      } catch (error) {
-        console.error('Error:', error);
-      }
-    },
-
     async generarReporteInventario() {
       try {
         const params = {
@@ -578,10 +417,6 @@ export default {
 
     exportarVentas() {
       console.log('Exportando ventas...');
-    },
-
-    exportarCompras() {
-      console.log('Exportando compras...');
     },
 
     exportarInventario() {
@@ -687,6 +522,44 @@ export default {
 .detail-table .text-warning {
   color: #fbbf24 !important;
   font-weight: 700;
+}
+
+.detail-table .text-dark {
+  color: #000 !important;
+  background-color: #ffffff !important;
+}
+
+.detail-table tbody tr.text-dark {
+  background-color: #ffffff !important;
+}
+
+.detail-table tbody tr.text-dark td {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  border-color: #ddd !important;
+}
+
+.detail-table tbody tr.text-dark td.fw-bold {
+  color: #000 !important;
+  font-weight: 700 !important;
+}
+
+.detail-table tbody tr.text-dark td.text-end {
+  color: #000 !important;
+}
+
+.detail-table tbody tr.text-dark td.text-success {
+  color: #2d8659 !important;
+  font-weight: 700 !important;
+}
+
+.detail-table tbody tr.text-dark td.text-warning {
+  color: #c89b0e !important;
+  font-weight: 700 !important;
+}
+
+.detail-table tbody tr.text-dark td .badge {
+  font-weight: 600;
 }
 
 .detail-table .text-light {

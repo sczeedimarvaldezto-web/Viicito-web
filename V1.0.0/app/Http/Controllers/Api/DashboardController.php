@@ -6,7 +6,10 @@ use App\Models\User;
 use App\Models\Venta;
 use App\Models\Producto;
 use App\Models\Usuario;
+use App\Models\CierreCaja;
+use App\Models\AuditoriaReinicio;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 /**
  * DashboardController
@@ -43,7 +46,6 @@ class DashboardController extends Controller
         // Ventas por método de pago
         $ventas_efectivo = $ventas->where('metodo_pago', 'Efectivo')->sum('total_venta');
         $ventas_qr = $ventas->where('metodo_pago', 'QR')->sum('total_venta');
-        $ventas_con_tarjeta = $ventas->where('metodo_pago', 'Con Tarjeta')->sum('total_venta');
 
         // Top productos vendidos
         $top_productos = Producto::with('detallesVenta')
@@ -67,7 +69,6 @@ class DashboardController extends Controller
                 'promedio_venta' => round($promedio_venta, 2),
                 'efectivo' => round($ventas_efectivo, 2),
                 'qr' => round($ventas_qr, 2),
-                'con_tarjeta' => round($ventas_con_tarjeta, 2),
             ],
             'inventario' => [
                 'productos_activos' => $productos_total,
@@ -176,6 +177,150 @@ class DashboardController extends Controller
         return response()->json([
             'total_empleados' => $empleados->count(),
             'empleados' => $empleados,
+        ]);
+    }
+
+    /**
+     * POST /api/dashboard/cierre-caja - Registrar cierre de caja
+     */
+    public function cerrarCaja(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'fecha_cierre' => 'required|date',
+                'total_efectivo' => 'required|numeric|min:0',
+                'total_qr' => 'required|numeric|min:0',
+                'total_ventas' => 'required|numeric|min:0',
+                'cantidad_transacciones' => 'required|integer|min:0',
+                'observaciones' => 'nullable|string',
+            ]);
+
+            // Verificar si ya existe cierre para esa fecha
+            $existente = CierreCaja::where('fecha_cierre', $validated['fecha_cierre'])->first();
+            
+            if ($existente) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ya existe un cierre de caja para esta fecha',
+                    'data' => $existente
+                ], 409);
+            }
+
+            // Crear nuevo cierre
+            $cierre = CierreCaja::create([
+                'fecha_cierre' => $validated['fecha_cierre'],
+                'total_efectivo' => $validated['total_efectivo'],
+                'total_qr' => $validated['total_qr'],
+                'total_ventas' => $validated['total_ventas'],
+                'cantidad_transacciones' => $validated['cantidad_transacciones'],
+                'observaciones' => $validated['observaciones'] ?? null,
+                'estado' => 'Completado',
+            ]);
+
+            \Log::info('✓ Cierre de caja registrado', [
+                'fecha' => $validated['fecha_cierre'],
+                'total' => $validated['total_ventas'],
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => '✓ Cierre de caja registrado correctamente',
+                'data' => $cierre
+            ], 201);
+
+        } catch (\Exception $e) {
+            \Log::error('❌ Error al cerrar caja:', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al registrar el cierre de caja: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * POST /api/dashboard/reiniciar - Reiniciar ventas del día
+     */
+    public function reiniciarVentas(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'guardar_cierre' => 'required|boolean',
+                'total_efectivo' => 'nullable|numeric|min:0',
+                'total_qr' => 'nullable|numeric|min:0',
+                'total_ventas' => 'nullable|numeric|min:0',
+                'observaciones' => 'nullable|string',
+            ]);
+
+            // Si quiere guardar el cierre antes de reiniciar
+            if ($validated['guardar_cierre']) {
+                CierreCaja::create([
+                    'fecha_cierre' => now()->toDateString(),
+                    'total_efectivo' => $validated['total_efectivo'] ?? 0,
+                    'total_qr' => $validated['total_qr'] ?? 0,
+                    'total_ventas' => $validated['total_ventas'] ?? 0,
+                    'cantidad_transacciones' => Venta::whereDate('created_at', now())->count(),
+                    'observaciones' => $validated['observaciones'] ?? null,
+                    'estado' => 'Completado',
+                ]);
+            }
+
+            // Contar ventas antes de borrar
+            $totalVentasBorradas = Venta::count();
+
+            // Eliminar todas las ventas
+            DB::transaction(function () use ($totalVentasBorradas) {
+                Venta::truncate();
+            });
+
+            // Registrar en auditoría
+            $usuario = auth()->user();
+            AuditoriaReinicio::create([
+                'fecha_reinicio' => now(),
+                'id_usuario' => $usuario?->id ?? null,
+                'total_ventas_borradas' => $totalVentasBorradas,
+                'razon' => 'Reinicio del sistema de ventas por orden del usuario',
+            ]);
+
+            \Log::warning('⚠️ Sistema reiniciado', [
+                'ventas_borradas' => $totalVentasBorradas,
+                'usuario' => $usuario?->name ?? 'Sistema',
+                'timestamp' => now(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => '✓ Sistema reiniciado correctamente. Se borraron ' . $totalVentasBorradas . ' ventas.',
+                'data' => [
+                    'ventas_borradas' => $totalVentasBorradas,
+                    'timestamp' => now(),
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            \Log::error('❌ Error al reiniciar sistema:', ['error' => $e->getMessage()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al reiniciar el sistema: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * GET /api/dashboard/historial-cierres - Historial de cierres de caja
+     */
+    public function historialCierres(Request $request)
+    {
+        $dias = $request->get('dias', 30);
+        $fecha_inicio = now()->subDays($dias)->startOfDay();
+
+        $cierres = CierreCaja::where('fecha_cierre', '>=', $fecha_inicio)
+            ->recientes()
+            ->get();
+
+        return response()->json([
+            'dias' => $dias,
+            'total_registros' => $cierres->count(),
+            'cierres' => $cierres,
         ]);
     }
 

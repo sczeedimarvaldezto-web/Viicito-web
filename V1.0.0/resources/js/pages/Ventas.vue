@@ -47,7 +47,7 @@
         <select v-model="filtros.metodo_pago" class="form-select dark-form-select" @change="cargarVentas">
           <option value="">Todos los métodos</option>
           <option value="Efectivo">💵 Efectivo</option>
-          <option value="Tarjeta">💳 Tarjeta</option>
+          <option value="QR">📱 QR</option>
           <option value="Crédito">📋 Crédito</option>
         </select>
       </div>
@@ -239,7 +239,6 @@
           <div class="row text-end">
             <div class="col-md-6 offset-md-6">
               <p><strong>Subtotal:</strong> {{ formatCurrency(ventaSeleccionada?.subtotal) }}</p>
-              <p><strong>IVA (21%):</strong> {{ formatCurrency(ventaSeleccionada?.impuesto) }}</p>
               <p class="fs-5"><strong class="text-success">Total:</strong> <span class="text-success">{{ formatCurrency(ventaSeleccionada?.total_venta) }}</span></p>
             </div>
           </div>
@@ -375,7 +374,6 @@ export default {
       const badges = {
         Efectivo: 'bg-success',
         QR: 'bg-warning',
-        'Con Tarjeta': 'bg-info',
       };
       return badges[metodo] || 'bg-primary';
     },

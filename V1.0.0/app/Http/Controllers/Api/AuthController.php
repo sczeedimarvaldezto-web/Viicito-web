@@ -27,7 +27,7 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'role' => 'sometimes|string|in:owner,employee',
+            'role' => 'sometimes|string|in:owner,employee,vendedor,auditor',
         ], [
             'email.unique' => 'Este correo electrónico ya está en uso.',
             'email.email' => 'El correo electrónico debe ser válido.',
@@ -57,7 +57,13 @@ class AuthController extends Controller
                 $roleName = $request->role;
             }
 
-            $roleLabel = $roleName === 'owner' ? 'Propietario' : 'Empleado';
+            $roleLabel = match ($roleName) {
+                'owner' => 'Propietario',
+                'employee' => 'Empleado',
+                'vendedor' => 'Vendedor',
+                'auditor' => 'Auditor',
+                default => 'Empleado',
+            };
             $role = Role::firstOrCreate([
                 'name' => $roleName,
             ], [
@@ -70,6 +76,7 @@ class AuthController extends Controller
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'role_id' => $role->id,
+                'estado' => 'Activo',
             ]);
 
             $user->load('role');
@@ -88,7 +95,7 @@ class AuthController extends Controller
                     'email' => $user->email,
                     'username' => $user->name,
                     'rol' => $user->role?->name ?? 'owner',
-                    'estado' => 'Activo',
+                    'estado' => $user->estado ?? 'Activo',
                 ],
                 'role' => $user->role?->name,
                 'isNewUser' => $isFirstUser,
@@ -122,8 +129,19 @@ class AuthController extends Controller
 
         // Intentar autenticar
         if (Auth::attempt(['email' => $request->email, 'password' => $request->password])) {
+            $user = Auth::user();
+
+            if (strtolower((string) $user->estado) === 'bloqueado') {
+                Auth::logout();
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Esta cuenta está bloqueada. Contacte al propietario.'
+                ], 403);
+            }
+
             $request->session()->regenerate();
-            $user = Auth::user()->load('role');
+            $user = $user->load('role');
 
             return response()->json([
                 'success' => true,
@@ -134,7 +152,7 @@ class AuthController extends Controller
                     'email' => $user->email,
                     'username' => $user->name,
                     'rol' => $user->role?->name ?? 'owner',
-                    'estado' => 'Activo',
+                    'estado' => $user->estado ?? 'Activo',
                 ],
                 'role' => $user->role?->name,
                 'redirect' => $user->hasRole('owner') ? '/owner-panel' : '/ventas'
@@ -182,7 +200,7 @@ class AuthController extends Controller
             'email' => $user->email,
             'username' => $user->name,
             'rol' => $user->role?->name ?? 'owner',
-            'estado' => 'Activo',
+            'estado' => $user->estado ?? 'Activo',
         ]);
     }
 }

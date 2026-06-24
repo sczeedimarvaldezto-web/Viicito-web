@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Carbon;
 
 /**
  * Venta Model
@@ -73,6 +74,9 @@ class Venta extends Model
 
     public function scopeRangoFechas($query, $fecha_inicio, $fecha_final)
     {
-        return $query->whereBetween('fecha_hora', [$fecha_inicio, $fecha_final]);
+        $inicio = Carbon::parse($fecha_inicio)->startOfDay();
+        $fin = Carbon::parse($fecha_final)->endOfDay();
+
+        return $query->whereBetween('fecha_hora', [$inicio, $fin]);
     }
 }

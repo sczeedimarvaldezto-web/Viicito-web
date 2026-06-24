@@ -15,30 +15,45 @@
     </template>
 
     <!-- Toast Notifications -->
-    <div v-if="notificacion" class="toast-container position-fixed bottom-0 end-0 p-3">
-      <div :class="['toast', 'show', `bg-${notificacion.tipo}`]" role="alert">
-        <div class="toast-body" :class="notificacion.tipo === 'danger' ? 'text-white' : ''">
-          {{ notificacion.mensaje }}
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+      <transition name="fade">
+        <div v-if="notificacion" 
+             :class="['toast', 'show', `bg-${notificacion.tipo}`, 'shadow']" 
+             role="alert"
+             style="min-width: 300px; animation: slideIn 0.3s ease-out;">
+          <div class="d-flex align-items-center p-2">
+            <div :class="['toast-body', notificacion.tipo === 'danger' ? 'text-white' : '', 'flex-grow-1']">
+              <strong>{{ notificacion.mensaje }}</strong>
+            </div>
+            <button type="button" class="btn-close" @click="notificacion = null" aria-label="Close"></button>
+          </div>
         </div>
-      </div>
+      </transition>
     </div>
+
+    <!-- Confirmation Modal -->
+    <ConfirmModal ref="confirmModal" />
   </div>
 </template>
 
 <script>
 import { api } from '@/services/api';
+import { setNotificacionCallback } from '@/services/notifications';
 import AppLayout from '@/layouts/AppLayout.vue';
+import ConfirmModal from '@/components/ConfirmModal.vue';
 
 export default {
   name: 'App',
   components: {
-    AppLayout
+    AppLayout,
+    ConfirmModal
   },
   data() {
     return {
       usuarioLogueado: null,
       notificacion: null,
       usuarioCargado: false,
+      timeoutNotificacion: null,
     };
   },
   computed: {
@@ -61,11 +76,31 @@ export default {
     }
   },
   mounted() {
+    // Registrar callback para mostrar notificaciones
+    setNotificacionCallback(this.mostrarNotificacion);
+    
     if (!this.enRutaPublica) {
       this.cargarUsuario();
     }
   },
   methods: {
+    mostrarNotificacion(datos) {
+      // Limpiar timeout anterior si existe
+      if (this.timeoutNotificacion) {
+        clearTimeout(this.timeoutNotificacion);
+      }
+
+      this.notificacion = {
+        mensaje: datos.mensaje,
+        tipo: datos.tipo || 'success',
+      };
+
+      // Auto-cerrar después de la duración especificada
+      this.timeoutNotificacion = setTimeout(() => {
+        this.notificacion = null;
+      }, datos.duracion || 3000);
+    },
+
     async cargarUsuario() {
       if (this.usuarioCargado || this.enRutaPublica) {
         return;
@@ -167,6 +202,47 @@ main {
 
 .toast-container {
   z-index: 1050;
+}
+
+.toast {
+  border-radius: 8px;
+  border: none;
+}
+
+.toast.show {
+  animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
 }
 
 .bg-success {

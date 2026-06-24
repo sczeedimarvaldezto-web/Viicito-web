@@ -50,6 +50,9 @@ class ProductoController extends Controller
         $validated['precio_compra'] = $validated['precio_compra'] ?? 0;
         $validated['stock_minimo'] = $validated['stock_minimo'] ?? 0;
         $validated['stock_maximo'] = $validated['stock_maximo'] ?? 0;
+        
+        // Asignar el propietario (usuario autenticado)
+        $validated['propietario_id'] = auth()->id();
 
         $producto = Producto::create($validated);
 
@@ -88,6 +91,26 @@ class ProductoController extends Controller
     {
         $productos = Producto::stockBajo()->with(['categoria', 'marca'])->paginate(15);
         return response()->json($productos);
+    }
+
+    /**
+     * GET /api/productos/buscar/codigo/{codigo} - Buscar por código de barras
+     */
+    public function buscarPorCodigo($codigo)
+    {
+        $producto = Producto::with(['categoria', 'marca'])
+            ->where('codigo_barras', $codigo)
+            ->first();
+
+        // Criterio de validación: Retornar 404 Not Found si no existe
+        if (!$producto) {
+            return response()->json([
+                'message' => 'Producto no encontrado'
+            ], Response::HTTP_NOT_FOUND); 
+        }
+
+        // Criterio de validación: Retornar 200 OK con el objeto
+        return response()->json($producto, Response::HTTP_OK); 
     }
 
     private function guardarImagen(Request $request): string

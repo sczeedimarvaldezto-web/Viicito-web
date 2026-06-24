@@ -6,8 +6,6 @@ import Dashboard from '@/pages/Dashboard.vue';
 import Productos from '@/pages/Productos.vue';
 import Ventas from '@/pages/Ventas.vue';
 import NuevaVenta from '@/pages/NuevaVenta.vue';
-import Compras from '@/pages/Compras.vue';
-import NuevaCompra from '@/pages/NuevaCompra.vue';
 import Categorias from '@/pages/Categorias.vue';
 import Marcas from '@/pages/Marcas.vue';
 import Reportes from '@/pages/Reportes.vue';
@@ -64,21 +62,6 @@ const routes = [
     path: '/ventas/:id',
     component: Ventas,
     meta: { title: 'Detalle Venta - Viicito' }
-  },
-  {
-    path: '/compras',
-    component: Compras,
-    meta: { title: 'Compras - Viicito' }
-  },
-  {
-    path: '/nueva-compra',
-    component: NuevaCompra,
-    meta: { title: 'Nueva Compra - Viicito' }
-  },
-  {
-    path: '/compras/:id',
-    component: Compras,
-    meta: { title: 'Detalle Compra - Viicito' }
   },
   {
     path: '/categorias',

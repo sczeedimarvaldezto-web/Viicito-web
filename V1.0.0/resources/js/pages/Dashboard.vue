@@ -12,6 +12,9 @@
       <button @click="cargarDatos" class="btn btn-sm btn-info-custom" title="Actualizar datos">
         <i class="bi bi-arrow-clockwise"></i> Actualizar
       </button>
+      <button v-if="esOwner" @click="mostrarConfirmReinicio" class="btn btn-sm btn-danger ms-2" title="Reiniciar sistema">
+        <i class="bi bi-arrow-counterclockwise"></i> Reiniciar
+      </button>
     </header>
 
     <!-- Loading State -->
@@ -130,7 +133,7 @@
 
               <router-link v-if="esOwner" to="/proveedores" class="quick-action-btn">
                 <div class="action-icon">
-                  <i class="bi bi-truck-fill"></i>
+                  <i class="bi bi-building-fill"></i>
                 </div>
                 <div class="action-info">
                   <p class="action-title">Proveedores</p>
@@ -141,7 +144,7 @@
 
               <router-link v-if="esOwner" to="/reportes" class="quick-action-btn">
                 <div class="action-icon">
-                  <i class="bi bi-graph-up-fill"></i>
+                  <i class="bi bi-file-earmark-bar-graph-fill"></i>
                 </div>
                 <div class="action-info">
                   <p class="action-title">Reportes Detallados</p>
@@ -222,9 +225,9 @@
               <div class="col">
                 <div class="payment-method-compact">
                   <i class="bi bi-credit-card"></i>
-                  <h6 class="payment-label">Con Tarjeta</h6>
-                  <h5 class="fw-bold payment-amount">{{ formatCurrency(resumen?.ventas?.con_tarjeta || 0) }}</h5>
-                  <div class="payment-percentage-compact">{{ calcularPorcentaje(resumen?.ventas?.con_tarjeta) }}%</div>
+                  <h6 class="payment-label">Tarjeta</h6>
+                  <h5 class="fw-bold payment-amount">{{ formatCurrency(0) }}</h5>
+                  <div class="payment-percentage-compact">0%</div>
                 </div>
               </div>
             </div>
@@ -237,6 +240,8 @@
 
 <script>
 import { api } from '@/services/api';
+import { showConfirmModal } from '@/components/ConfirmModal.vue';
+import { showSuccess, showError } from '@/services/notifications';
 
 export default {
   name: 'Dashboard',
@@ -258,6 +263,62 @@ export default {
     this.cargarDatos();
   },
   methods: {
+    async mostrarConfirmReinicio() {
+      // Confirmar reinicio
+      const confirmed = await showConfirmModal({
+        titulo: '⚠️ Reiniciar Sistema',
+        mensaje: '¿Deseas reiniciar TODO? Esto borrará todos los registros de ventas del día.',
+        textoConfirmar: 'Sí, reiniciar',
+        textoCancelar: 'Cancelar',
+        tipoBoton: 'warning',
+      });
+
+      if (confirmed) {
+        await this.reiniciarTodo();
+      }
+    },
+
+    async reiniciarTodo() {
+      try {
+        this.cargando = true;
+        
+        // Llamar API para reiniciar
+        const respuesta = await api.post('/dashboard/reiniciar', {
+          total_ventas: this.resumen?.ventas?.total_ventas || 0,
+          observaciones: `Reinicio realizado por ${JSON.parse(localStorage.getItem('user') || '{}').name || 'Usuario'}`,
+        });
+
+        if (respuesta.data.success) {
+          showSuccess(`✓ ${respuesta.data.message}`);
+          
+          // Resetear datos del dashboard
+          this.resumen = {
+            ventas: {
+              total_ventas: 0,
+              total_mes: 0,
+              cantidad_transacciones: 0,
+              efectivo: 0,
+              qr: 0,
+            },
+            inventario: {
+              productos_activos: 0,
+              productos_bajo_stock: 0,
+            },
+            top_productos: [],
+          };
+
+          // Recargar datos después de 2 segundos
+          setTimeout(() => this.cargarDatos(), 2000);
+        }
+      } catch (error) {
+        console.error('Error al reiniciar:', error);
+        showError('❌ Error al reiniciar el sistema: ' + (error.response?.data?.message || error.message));
+      } finally {
+        this.cargando = false;
+      }
+    },
+
+
     async cargarDatos() {
       this.cargando = true;
       this.error = null;
@@ -293,9 +354,8 @@ export default {
       }).format(fecha);
     },
     calcularPorcentaje(valor) {
-      const total = (this.resumen?.ventas?.efectivo || 0) + 
-                   (this.resumen?.ventas?.tarjeta || 0) + 
-                   (this.resumen?.ventas?.credito || 0);
+      const total = (this.resumen?.ventas?.efectivo || 0) +
+                   (this.resumen?.ventas?.qr || 0);
       return total > 0 ? Math.round((valor / total) * 100) : 0;
     }
   },
